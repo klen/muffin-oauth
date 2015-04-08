@@ -48,6 +48,12 @@ Usage
 
 See example application.
 
+.. code:: python
+
+    # OAuth2
+    client = app.ps.oauth.client('github', access_token='...')
+    resource = yield from client.request('GET', 'user')
+
 .. _bugtracker:
 
 Bug tracker

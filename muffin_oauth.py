@@ -4,8 +4,8 @@ import functools
 from hashlib import sha1
 from random import SystemRandom
 
-import aioauth_client as oauth
 import muffin
+from aioauth_client import * # noqa
 from muffin.plugins import BasePlugin, PluginException
 from muffin.utils import to_coroutine
 
@@ -41,6 +41,17 @@ class Plugin(BasePlugin):
             raise PluginException('muffin_session should be installed.')
         super().setup(app)
 
+    def client(self, client_name, **params):
+        """ Initialize OAuth client from registry. """
+        if client_name not in self.options.clients:
+            raise OAuthException('Unconfigured client: %s' % client_name)
+
+        if client_name not in ClientRegistry.clients:
+            raise OAuthException('Unsupported services: %s' % client_name)
+
+        params = dict(self.options.clients[client_name], **params)
+        return ClientRegistry.clients[client_name](**params)
+
     def login(self, client_name):
         """ Process login with OAuth. """
         def decorator(view):
@@ -48,7 +59,7 @@ class Plugin(BasePlugin):
             if client_name not in self.options.clients:
                 raise OAuthException('Unconfigured client: %s' % client_name)
 
-            if client_name not in oauth.ClientRegistry.clients:
+            if client_name not in ClientRegistry.clients:
                 raise OAuthException('Unsupported services: %s' % client_name)
 
             name = client_name
@@ -57,12 +68,10 @@ class Plugin(BasePlugin):
             @asyncio.coroutine
             @functools.wraps(view)
             def wrapper(request):
-                params = request.app.ps.oauth.options.clients[name]
-                client = oauth.ClientRegistry.clients[name](logger=request.app.logger, **params)
-
+                client = request.app.ps.oauth.client(name, logger=request.app.logger)
                 redirect_url = 'http://%s%s' % (request.host, request.path_qs)
 
-                if isinstance(client, oauth.OAuth1Client):
+                if isinstance(client, OAuth1Client):
                     oauth_verifier = request.GET.get('oauth_verifier')
                     if not oauth_verifier:
 
@@ -88,7 +97,7 @@ class Plugin(BasePlugin):
                     # Get access tokens
                     yield from client.get_access_token(oauth_verifier)
 
-                elif isinstance(client, oauth.OAuth2Client):
+                elif isinstance(client, OAuth2Client):
                     code = request.GET.get('code')
                     if not code:
 
