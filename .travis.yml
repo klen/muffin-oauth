@@ -9,4 +9,4 @@ branches:
 
 install: pip install -r requirements-tests.txt
 
-script: py.test tests
+script: py.test tests.py

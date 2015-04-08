@@ -9,7 +9,6 @@ app = muffin.Application('oauth', CONFIG='example.config')
 @app.register('/')
 def index(request):
     """ Index Page. """
-    request.session['lama'] = 1, 2, 3
     return """
         <ul>
             <li><a href="/bitbucket">Bitbucket</a></li>
