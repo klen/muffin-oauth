@@ -10,7 +10,7 @@ from muffin.plugins import BasePlugin, PluginException
 from muffin.utils import to_coroutine
 
 
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 __project__ = "muffin-oauth"
 __author__ = "Kirill Klenov <horneds@gmail.com>"
 __license__ = "MIT"
