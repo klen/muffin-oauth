@@ -39,7 +39,7 @@ def twitter(request, client):
 
 
 @app.register('/github')
-@app.ps.oauth.login('github')
+@app.ps.oauth.login('github', scope="user:email")
 def github(request, client):
     """ Github example. """
     response = yield from client.request('GET', 'user')
@@ -48,7 +48,7 @@ def github(request, client):
 
 
 @app.register('/facebook')
-@app.ps.oauth.login('facebook')
+@app.ps.oauth.login('facebook', scope="email")
 def facebook(request, client):
     """ Facebook example. """
     response = yield from client.request('GET', 'me')

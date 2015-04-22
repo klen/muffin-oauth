@@ -52,7 +52,7 @@ class Plugin(BasePlugin):
         params = dict(self.options.clients[client_name], **params)
         return ClientRegistry.clients[client_name](**params)
 
-    def login(self, client_name):
+    def login(self, client_name, **params):
         """ Process login with OAuth. """
         def decorator(view):
 
@@ -63,6 +63,7 @@ class Plugin(BasePlugin):
                 raise OAuthException('Unsupported services: %s' % client_name)
 
             name = client_name
+            urlparams = params
             view = to_coroutine(view)
 
             @asyncio.coroutine
@@ -104,7 +105,8 @@ class Plugin(BasePlugin):
                         # Authorize an user
                         state = sha1(str(random()).encode('ascii')).hexdigest()
                         request.session['oauth_secret'] = state
-                        url = client.get_authorize_url(redirect_uri=redirect_uri, state=state)
+                        url = client.get_authorize_url(
+                            redirect_uri=redirect_uri, state=state, **urlparams)
                         raise muffin.HTTPFound(url)
 
                     # Check state
