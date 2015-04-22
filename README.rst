@@ -47,6 +47,11 @@ Usage
 =====
 
 See example application.
+Run with command: ::
+
+    $ make run
+
+And open http://fuf.me:5000 in your browser.
 
 .. code:: python
 

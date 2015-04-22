@@ -1,13 +1,11 @@
 """ Support OAuth in Muffin Framework. """
 import asyncio
-import functools
 from hashlib import sha1
 from random import SystemRandom
 
 import muffin
 from aioauth_client import * # noqa
 from muffin.plugins import BasePlugin, PluginException
-from muffin.utils import to_coroutine
 
 
 __version__ = "0.0.6"
@@ -52,73 +50,67 @@ class Plugin(BasePlugin):
         params = dict(self.options.clients[client_name], **params)
         return ClientRegistry.clients[client_name](**params)
 
-    def login(self, client_name, **params):
-        """ Process login with OAuth. """
-        def decorator(view):
+    @asyncio.coroutine
+    def login(self, client_name, request, redirect_uri=None, **params):
+        """ Process login with OAuth.
 
-            if client_name not in self.options.clients:
-                raise OAuthException('Unconfigured client: %s' % client_name)
+        :param client_name: A name one of configured clients
+        :param request: Web request
+        :param redirect_uri: An URI for authorization redirect
 
-            if client_name not in ClientRegistry.clients:
-                raise OAuthException('Unsupported services: %s' % client_name)
+        """
+        if client_name not in self.options.clients:
+            raise OAuthException('Unconfigured client: %s' % client_name)
 
-            name = client_name
-            urlparams = params
-            view = to_coroutine(view)
+        if client_name not in ClientRegistry.clients:
+            raise OAuthException('Unsupported services: %s' % client_name)
 
-            @asyncio.coroutine
-            @functools.wraps(view)
-            def wrapper(request):
-                client = request.app.ps.oauth.client(name, logger=request.app.logger)
-                redirect_uri = 'http://%s%s' % (request.host, request.path)
+        client = self.app.ps.oauth.client(client_name, logger=self.app.logger)
+        redirect_uri = redirect_uri or 'http://%s%s' % (request.host, request.path)
 
-                if isinstance(client, OAuth1Client):
-                    oauth_verifier = request.GET.get('oauth_verifier')
-                    if not oauth_verifier:
+        if isinstance(client, OAuth1Client):
+            oauth_verifier = request.GET.get('oauth_verifier')
+            if not oauth_verifier:
 
-                        # Get request credentials
-                        token, secret = yield from client.get_request_token(
-                            oauth_callback=redirect_uri)
+                # Get request credentials
+                token, secret = yield from client.get_request_token(
+                    oauth_callback=redirect_uri)
 
-                        # Save the credentials in current user session
-                        request.session['oauth_token'] = token
-                        request.session['oauth_token_secret'] = secret
+                # Save the credentials in current user session
+                request.session['oauth_token'] = token
+                request.session['oauth_token_secret'] = secret
 
-                        url = client.get_authorize_url()
-                        return muffin.HTTPFound(url)
+                url = client.get_authorize_url()
+                raise muffin.HTTPFound(url)
 
-                    # Check request_token
-                    oauth_token = request.GET.get('oauth_token')
-                    if request.session['oauth_token'] != oauth_token:
-                        raise muffin.HTTPForbidden(reason='Invalid token.')
+            # Check request_token
+            oauth_token = request.GET.get('oauth_token')
+            if request.session['oauth_token'] != oauth_token:
+                raise muffin.HTTPForbidden(reason='Invalid token.')
 
-                    client.oauth_token = oauth_token
-                    client.oauth_token_secret = request.session.get('oauth_token_secret')
+            client.oauth_token = oauth_token
+            client.oauth_token_secret = request.session.get('oauth_token_secret')
 
-                    # Get access tokens
-                    yield from client.get_access_token(oauth_verifier)
+            # Get access tokens
+            yield from client.get_access_token(oauth_verifier)
 
-                elif isinstance(client, OAuth2Client):
-                    code = request.GET.get('code')
-                    if not code:
+        elif isinstance(client, OAuth2Client):
+            code = request.GET.get('code')
+            if not code:
 
-                        # Authorize an user
-                        state = sha1(str(random()).encode('ascii')).hexdigest()
-                        request.session['oauth_secret'] = state
-                        url = client.get_authorize_url(
-                            redirect_uri=redirect_uri, state=state, **urlparams)
-                        raise muffin.HTTPFound(url)
+                # Authorize an user
+                state = sha1(str(random()).encode('ascii')).hexdigest()
+                request.session['oauth_secret'] = state
+                url = client.get_authorize_url(
+                    redirect_uri=redirect_uri, state=state, **params)
+                raise muffin.HTTPFound(url)
 
-                    # Check state
-                    state = request.GET.get('state')
-                    if request.session['oauth_secret'] != state:
-                        raise muffin.HTTPForbidden(reason='Invalid token.')
+            # Check state
+            state = request.GET.get('state')
+            if request.session['oauth_secret'] != state:
+                raise muffin.HTTPForbidden(reason='Invalid token.')
 
-                    # Get access token
-                    yield from client.get_access_token(code, redirect_uri=redirect_uri)
+            # Get access token
+            yield from client.get_access_token(code, redirect_uri=redirect_uri)
 
-                return (yield from view(request, client))
-
-            return wrapper
-
-        return decorator
+        return client

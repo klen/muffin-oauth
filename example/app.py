@@ -11,46 +11,35 @@ def index(request):
     """ Index Page. """
     return """
         <ul>
-            <li><a href="/bitbucket">Bitbucket</a></li>
-            <li><a href="/facebook">Facebook</a></li>
-            <li><a href="/github">Github</a></li>
-            <li><a href="/twitter">Twitter</a></li>
+            <li><a href="/oauth/bitbucket">Bitbucket</a></li>
+            <li><a href="/oauth/facebook">Facebook</a></li>
+            <li><a href="/oauth/github">Github</a></li>
+            <li><a href="/oauth/google">Google</a></li>
+            <li><a href="/oauth/twitter">Twitter</a></li>
         </ul>
     """
 
 
-@app.register('/bitbucket')
-@app.ps.oauth.login('bitbucket')
-def bitbucket(request, client):
-    """ Bitbucket example. """
-    response = yield from client.request('GET', 'user')
-    data = yield from response.json()
-    return "<ul>%s</ul>" % "".join("<li><b>%s</b>: %s</li>" % item
-                                   for item in data['user'].items())
+@app.register('/oauth/{provider}')
+def oauth(request):
+    """ Oauth example. """
+    provider = request.match_info.get('provider')
+    client = yield from app.ps.oauth.login(provider, request)
 
+    if provider == 'bitbucket':
+        response = yield from client.request('GET', 'user')
 
-@app.register('/twitter')
-@app.ps.oauth.login('twitter')
-def twitter(request, client):
-    """ Twitter example. """
-    response = yield from client.request('GET', 'account/verify_credentials.json')
-    data = yield from response.json()
-    return "<ul>%s</ul>" % "".join("<li><b>%s</b>: %s</li>" % item for item in data.items())
+    elif provider == 'twitter':
+        response = yield from client.request('GET', 'account/verify_credentials.json')
 
+    elif provider == 'github':
+        response = yield from client.request('GET', 'user')
 
-@app.register('/github')
-@app.ps.oauth.login('github', scope="user:email")
-def github(request, client):
-    """ Github example. """
-    response = yield from client.request('GET', 'user')
-    data = yield from response.json()
-    return "<ul>%s</ul>" % "".join("<li><b>%s</b>: %s</li>" % item for item in data.items())
+    elif provider == 'facebook':
+        response = yield from client.request('GET', 'me')
 
+    elif provider == 'google':
+        response = yield from client.request('GET', 'people/me')
 
-@app.register('/facebook')
-@app.ps.oauth.login('facebook', scope="email")
-def facebook(request, client):
-    """ Facebook example. """
-    response = yield from client.request('GET', 'me')
     data = yield from response.json()
     return "<ul>%s</ul>" % "".join("<li><b>%s</b>: %s</li>" % item for item in data.items())
