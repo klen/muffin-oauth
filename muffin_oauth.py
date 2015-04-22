@@ -69,7 +69,7 @@ class Plugin(BasePlugin):
             @functools.wraps(view)
             def wrapper(request):
                 client = request.app.ps.oauth.client(name, logger=request.app.logger)
-                redirect_url = 'http://%s%s' % (request.host, request.path_qs)
+                redirect_uri = 'http://%s%s' % (request.host, request.path)
 
                 if isinstance(client, OAuth1Client):
                     oauth_verifier = request.GET.get('oauth_verifier')
@@ -77,7 +77,7 @@ class Plugin(BasePlugin):
 
                         # Get request credentials
                         token, secret = yield from client.get_request_token(
-                            oauth_callback=redirect_url)
+                            oauth_callback=redirect_uri)
 
                         # Save the credentials in current user session
                         request.session['oauth_token'] = token
@@ -104,7 +104,7 @@ class Plugin(BasePlugin):
                         # Authorize an user
                         state = sha1(str(random()).encode('ascii')).hexdigest()
                         request.session['oauth_secret'] = state
-                        url = client.get_authorize_url(redirect_url=redirect_url, state=state)
+                        url = client.get_authorize_url(redirect_uri=redirect_uri, state=state)
                         raise muffin.HTTPFound(url)
 
                     # Check state
@@ -113,7 +113,7 @@ class Plugin(BasePlugin):
                         raise muffin.HTTPForbidden(reason='Invalid token.')
 
                     # Get access token
-                    yield from client.get_access_token(code, redirect_url=redirect_url)
+                    yield from client.get_access_token(code, redirect_uri=redirect_uri)
 
                 return (yield from view(request, client))
 

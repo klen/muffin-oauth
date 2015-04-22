@@ -17,6 +17,7 @@ OAUTH_CLIENTS = {
         'consumer_secret': 'YWzEvXZJO9PI6f9w2FtwUJenMvy9SPLrHOvnNkVkc5LdYjKKup',
     },
     'facebook': {
-
+        'client_id': '384739235070641',
+        'client_secret': '8e3374a4e1e91a2bd5b830a46208c15a',
     },
 }

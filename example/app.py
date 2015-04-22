@@ -12,6 +12,7 @@ def index(request):
     return """
         <ul>
             <li><a href="/bitbucket">Bitbucket</a></li>
+            <li><a href="/facebook">Facebook</a></li>
             <li><a href="/github">Github</a></li>
             <li><a href="/twitter">Twitter</a></li>
         </ul>
@@ -42,5 +43,14 @@ def twitter(request, client):
 def github(request, client):
     """ Github example. """
     response = yield from client.request('GET', 'user')
+    data = yield from response.json()
+    return "<ul>%s</ul>" % "".join("<li><b>%s</b>: %s</li>" % item for item in data.items())
+
+
+@app.register('/facebook')
+@app.ps.oauth.login('facebook')
+def facebook(request, client):
+    """ Facebook example. """
+    response = yield from client.request('GET', 'me')
     data = yield from response.json()
     return "<ul>%s</ul>" % "".join("<li><b>%s</b>: %s</li>" % item for item in data.items())
