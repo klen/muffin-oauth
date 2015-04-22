@@ -20,9 +20,9 @@ def app(loop):
     )
 
     @app.register('/github')
-    @app.ps.oauth.login('github')
-    def auth(request, service):
-        response = yield from service.request('GET', '/user')
+    def auth(request):
+        client = yield from app.ps.oauth.login('github', request)
+        response = yield from client.request('GET', '/user')
         data = yield from response.json()
         return data
 
