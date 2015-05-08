@@ -67,6 +67,7 @@ class Plugin(BasePlugin):
 
         client = self.app.ps.oauth.client(client_name, logger=self.app.logger)
         redirect_uri = redirect_uri or 'http://%s%s' % (request.host, request.path)
+        session = yield from self.app.ps.session(request)
 
         if isinstance(client, OAuth1Client):
             oauth_verifier = request.GET.get('oauth_verifier')
@@ -77,19 +78,19 @@ class Plugin(BasePlugin):
                     oauth_callback=redirect_uri)
 
                 # Save the credentials in current user session
-                request.session['oauth_token'] = token
-                request.session['oauth_token_secret'] = secret
+                session['oauth_token'] = token
+                session['oauth_token_secret'] = secret
 
                 url = client.get_authorize_url()
                 raise muffin.HTTPFound(url)
 
             # Check request_token
             oauth_token = request.GET.get('oauth_token')
-            if request.session['oauth_token'] != oauth_token:
+            if session['oauth_token'] != oauth_token:
                 raise muffin.HTTPForbidden(reason='Invalid token.')
 
             client.oauth_token = oauth_token
-            client.oauth_token_secret = request.session.get('oauth_token_secret')
+            client.oauth_token_secret = session.get('oauth_token_secret')
 
             # Get access tokens
             yield from client.get_access_token(oauth_verifier)
@@ -100,14 +101,14 @@ class Plugin(BasePlugin):
 
                 # Authorize an user
                 state = sha1(str(random()).encode('ascii')).hexdigest()
-                request.session['oauth_secret'] = state
+                session['oauth_secret'] = state
                 url = client.get_authorize_url(
                     redirect_uri=redirect_uri, state=state, **params)
                 raise muffin.HTTPFound(url)
 
             # Check state
             state = request.GET.get('state')
-            if request.session['oauth_secret'] != state:
+            if session['oauth_secret'] != state:
                 raise muffin.HTTPForbidden(reason='Invalid token.')
 
             # Get access token
