@@ -108,7 +108,8 @@ class Plugin(BasePlugin):
 
             # Check state
             state = request.GET.get('state')
-            if session['oauth_secret'] != state:
+            oauth_secret = session.pop('oauth_secret')
+            if oauth_secret != state:
                 raise muffin.HTTPForbidden(reason='Invalid token.')
 
             # Get access token
