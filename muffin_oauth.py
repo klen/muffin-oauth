@@ -30,7 +30,8 @@ class Plugin(BasePlugin):
 
     name = 'oauth'
     defaults = {
-        'clients': {}
+        'clients': {},
+        'redirect_uri': None,
     }
 
     def setup(self, app):
@@ -65,8 +66,11 @@ class Plugin(BasePlugin):
         if client_name not in ClientRegistry.clients:
             raise OAuthException('Unsupported services: %s' % client_name)
 
-        client = self.app.ps.oauth.client(client_name, logger=self.app.logger)
-        redirect_uri = redirect_uri or 'http://%s%s' % (request.host, request.path)
+        client = self.client(client_name, logger=self.app.logger)
+
+        # TODO: aiohttp > 0.16.3 get current scheme
+        redirect_uri = redirect_uri or self.options.redirect_uri or 'http://%s%s' % (
+            request.host, request.path)
         session = yield from self.app.ps.session(request)
 
         if isinstance(client, OAuth1Client):
