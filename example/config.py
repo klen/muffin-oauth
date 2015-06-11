@@ -26,5 +26,9 @@ OAUTH_CLIENTS = {
         'client_id': '150775235058-9fmas709maee5nn053knv1heov12sh4n.apps.googleusercontent.com',
         'client_secret': 'df3JwpfRf8RIBz-9avNW8Gx7',
         'scope': 'profile email',
+    },
+    'yandex': {
+        'client_id': 'e19388a76a824b3385f38beec67f98f1',
+        'client_secret': '1d2e6fdcc23b45849def6a34b43ac2d8',
     }
 }

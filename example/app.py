@@ -17,6 +17,7 @@ def index(request):
             <li><a href="/oauth/github">Github</a></li>
             <li><a href="/oauth/google">Google</a></li>
             <li><a href="/oauth/twitter">Twitter</a></li>
+            <li><a href="/oauth/yandex">Yandex</a></li>
         </ul>
     """
 
