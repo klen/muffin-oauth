@@ -1,6 +1,7 @@
 """ Example application. """
 
 import muffin
+import html
 
 
 app = muffin.Application('oauth', CONFIG='example.config')
@@ -25,5 +26,18 @@ def oauth(request):
     """ Oauth example. """
     provider = request.match_info.get('provider')
     client = yield from app.ps.oauth.login(provider, request)
-    data = yield from client.user_info()
-    return "<ul>%s</ul>" % "".join("<li><b>%s</b>: %s</li>" % item for item in data.items())
+    user, data = yield from client.user_info()
+    response = (
+        "<a href='/'>back</a><br/><br/>"
+        "<ul>"
+        "<li>ID: %(id)s</li>"
+        "<li>Username: %(username)s</li>"
+        "<li>First, last name: %(first_name)s, %(last_name)s</li>"
+        "<li>Email: %(email)s</li>"
+        "<li>Link: %(link)s</li>"
+        "<li>Picture: %(picture)s</li>"
+        "<li>Country, city: %(country)s, %(city)s</li>"
+        "</ul>"
+    ) % user.__dict__
+    response += "<code>%s</code>" % html.escape(repr(data))
+    return response
