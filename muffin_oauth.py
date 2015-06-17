@@ -68,9 +68,8 @@ class Plugin(BasePlugin):
 
         client = self.client(client_name, logger=self.app.logger)
 
-        # TODO: aiohttp > 0.16.3 get current scheme
-        redirect_uri = redirect_uri or self.options.redirect_uri or 'http://%s%s' % (
-            request.host, request.path)
+        redirect_uri = redirect_uri or self.options.redirect_uri or '%s://%s%s' % (
+            request.scheme, request.host, request.path)
         session = yield from self.app.ps.session(request)
 
         if isinstance(client, OAuth1Client):
