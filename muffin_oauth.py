@@ -111,9 +111,9 @@ class Plugin(BasePlugin):
 
             # Check state
             state = request.GET.get('state')
-            oauth_secret = session.pop('oauth_secret')
+            oauth_secret = session.pop('oauth_secret', '')
             if oauth_secret != state:
-                raise muffin.HTTPForbidden(reason='Invalid token.')
+                raise muffin.HTTPForbidden(reason='Invalid token "%s".' % oauth_secret)
 
             # Get access token
             yield from client.get_access_token(code, redirect_uri=redirect_uri)
