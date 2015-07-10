@@ -8,7 +8,7 @@ from aioauth_client import * # noqa
 from muffin.plugins import BasePlugin, PluginException
 
 
-__version__ = "0.0.15"
+__version__ = "0.0.16"
 __project__ = "muffin-oauth"
 __author__ = "Kirill Klenov <horneds@gmail.com>"
 __license__ = "MIT"
