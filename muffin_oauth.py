@@ -5,7 +5,8 @@ from random import SystemRandom
 
 import muffin
 from aioauth_client import * # noqa
-from muffin.plugins import BasePlugin, PluginException
+from muffin.plugins import BasePlugin
+from muffin_session import Plugin as SPlugin
 
 
 __version__ = "0.0.16"
@@ -33,22 +34,19 @@ class Plugin(BasePlugin):
         'clients': {},
         'redirect_uri': None,
     }
-
-    def setup(self, app):
-        """ Ensure muffin_session is installed. """
-        if 'session' not in app.plugins:
-            raise PluginException('muffin_session should be installed.')
-        super().setup(app)
+    dependencies = {
+        'session': SPlugin
+    }
 
     def client(self, client_name, **params):
         """ Initialize OAuth client from registry. """
-        if client_name not in self.options.clients:
+        if client_name not in self.cfg.clients:
             raise OAuthException('Unconfigured client: %s' % client_name)
 
         if client_name not in ClientRegistry.clients:
             raise OAuthException('Unsupported services: %s' % client_name)
 
-        params = dict(self.options.clients[client_name], **params)
+        params = dict(self.cfg.clients[client_name], **params)
         return ClientRegistry.clients[client_name](**params)
 
     @asyncio.coroutine
@@ -60,7 +58,7 @@ class Plugin(BasePlugin):
         :param redirect_uri: An URI for authorization redirect
 
         """
-        if client_name not in self.options.clients:
+        if client_name not in self.cfg.clients:
             raise OAuthException('Unconfigured client: %s' % client_name)
 
         if client_name not in ClientRegistry.clients:
@@ -68,7 +66,7 @@ class Plugin(BasePlugin):
 
         client = self.client(client_name, logger=self.app.logger)
 
-        redirect_uri = redirect_uri or self.options.redirect_uri or '%s://%s%s' % (
+        redirect_uri = redirect_uri or self.cfg.redirect_uri or '%s://%s%s' % (
             request.scheme, request.host, request.path)
         session = yield from self.app.ps.session(request)
 
