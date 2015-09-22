@@ -1,4 +1,4 @@
-""" Support OAuth in Muffin Framework. """
+"""Support OAuth in Muffin Framework."""
 import asyncio
 from hashlib import sha1
 from random import SystemRandom
@@ -20,14 +20,14 @@ random = SystemRandom().random
 
 class OAuthException(Exception):
 
-    """ Implement an exception in OAUTH process. """
+    """Implement an exception during OAUTH process."""
 
     pass
 
 
 class Plugin(BasePlugin):
 
-    """ Support OAuth. """
+    """Support OAuth."""
 
     name = 'oauth'
     defaults = {
@@ -39,7 +39,7 @@ class Plugin(BasePlugin):
     }
 
     def client(self, client_name, **params):
-        """ Initialize OAuth client from registry. """
+        """Initialize OAuth client from registry."""
         if client_name not in self.cfg.clients:
             raise OAuthException('Unconfigured client: %s' % client_name)
 
@@ -51,12 +51,11 @@ class Plugin(BasePlugin):
 
     @asyncio.coroutine
     def login(self, client_name, request, redirect_uri=None, **params):
-        """ Process login with OAuth.
+        """Process login with OAuth.
 
         :param client_name: A name one of configured clients
         :param request: Web request
         :param redirect_uri: An URI for authorization redirect
-
         """
         if client_name not in self.cfg.clients:
             raise OAuthException('Unconfigured client: %s' % client_name)
