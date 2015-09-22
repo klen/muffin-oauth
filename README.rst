@@ -94,7 +94,5 @@ a postcard to: ::
 
 .. _links:
 
-
 .. _klen: https://github.com/klen
-
-_MIT license: http://opensource.org/licenses/MIT
+.. _MIT license: http://opensource.org/licenses/MIT
