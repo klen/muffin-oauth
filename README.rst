@@ -84,7 +84,7 @@ License
 
 Licensed under a `MIT license`_.
 
-If you wish to express your appreciation for the role, you are welcome to send
+If you wish to express your appreciation for the project, you are welcome to send
 a postcard to: ::
 
     Kirill Klenov
