@@ -9,7 +9,7 @@ from muffin.plugins import BasePlugin
 from muffin_session import Plugin as SPlugin
 
 
-__version__ = "0.2.5"
+__version__ = "0.3.0"
 __project__ = "muffin-oauth"
 __author__ = "Kirill Klenov <horneds@gmail.com>"
 __license__ = "MIT"
