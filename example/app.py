@@ -1,4 +1,4 @@
-""" Example application. """
+"""Example application."""
 
 import muffin
 import html
@@ -9,7 +9,7 @@ app = muffin.Application('oauth', CONFIG='example.config')
 
 @app.register('/')
 def index(request):
-    """ Index Page. """
+    """Index Page."""
     return """
         <ul>
             <li><a href="/oauth/bitbucket">Bitbucket</a></li>
@@ -24,9 +24,9 @@ def index(request):
 
 @app.register('/oauth/{provider}')
 def oauth(request):
-    """ Oauth example. """
+    """Oauth example."""
     provider = request.match_info.get('provider')
-    client = yield from app.ps.oauth.login(provider, request)
+    client, _ = yield from app.ps.oauth.login(provider, request)
     user, data = yield from client.user_info()
     response = (
         "<a href='/'>back</a><br/><br/>"

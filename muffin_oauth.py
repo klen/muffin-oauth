@@ -93,9 +93,9 @@ class Plugin(BasePlugin):
             client.oauth_token_secret = session.get('oauth_token_secret')
 
             # Get access tokens
-            yield from client.get_access_token(oauth_verifier)
+            return client, (yield from client.get_access_token(oauth_verifier))
 
-        elif isinstance(client, OAuth2Client):
+        if isinstance(client, OAuth2Client):
             code = request.GET.get('code')
             if not code:
 
@@ -113,6 +113,6 @@ class Plugin(BasePlugin):
                 raise muffin.HTTPForbidden(reason='Invalid token "%s".' % oauth_secret)
 
             # Get access token
-            yield from client.get_access_token(code, redirect_uri=redirect_uri)
+            return client, (yield from client.get_access_token(code, redirect_uri=redirect_uri))
 
         return client
