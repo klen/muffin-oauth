@@ -1,5 +1,4 @@
 """Support OAuth in Muffin Framework."""
-import asyncio
 from hashlib import sha1
 from random import SystemRandom
 
@@ -49,8 +48,7 @@ class Plugin(BasePlugin):
         params = dict(self.cfg.clients[client_name], **params)
         return ClientRegistry.clients[client_name](**params)
 
-    @asyncio.coroutine
-    def login(self, client_name, request, redirect_uri=None, **params):
+    async def login(self, client_name, request, redirect_uri=None, **params):
         """Process login with OAuth.
 
         :param client_name: A name one of configured clients
@@ -67,14 +65,14 @@ class Plugin(BasePlugin):
 
         redirect_uri = redirect_uri or self.cfg.redirect_uri or '%s://%s%s' % (
             request.scheme, request.host, request.path)
-        session = yield from self.app.ps.session(request)
+        session = await self.app.ps.session(request)
 
         if isinstance(client, OAuth1Client):
-            oauth_verifier = request.GET.get('oauth_verifier')
+            oauth_verifier = request.query.get('oauth_verifier')
             if not oauth_verifier:
 
                 # Get request credentials
-                token, secret = yield from client.get_request_token(
+                token, secret = await client.get_request_token(
                     oauth_callback=redirect_uri)
 
                 # Save the credentials in current user session
@@ -85,7 +83,7 @@ class Plugin(BasePlugin):
                 raise muffin.HTTPFound(url)
 
             # Check request_token
-            oauth_token = request.GET.get('oauth_token')
+            oauth_token = request.query.get('oauth_token')
             if session['oauth_token'] != oauth_token:
                 raise muffin.HTTPForbidden(reason='Invalid token.')
 
@@ -93,10 +91,10 @@ class Plugin(BasePlugin):
             client.oauth_token_secret = session.get('oauth_token_secret')
 
             # Get access tokens
-            return client, (yield from client.get_access_token(oauth_verifier))
+            return client, await client.get_access_token(oauth_verifier)
 
         if isinstance(client, OAuth2Client):
-            code = request.GET.get('code')
+            code = request.query.get('code')
             if not code:
 
                 # Authorize an user
@@ -107,12 +105,12 @@ class Plugin(BasePlugin):
                 raise muffin.HTTPFound(url)
 
             # Check state
-            state = request.GET.get('state')
+            state = request.query.get('state')
             oauth_secret = session.pop('oauth_secret', '')
             if oauth_secret != state:
                 raise muffin.HTTPForbidden(reason='Invalid token "%s".' % oauth_secret)
 
             # Get access token
-            return client, (yield from client.get_access_token(code, redirect_uri=redirect_uri))
+            return client, await client.get_access_token(code, redirect_uri=redirect_uri)
 
         return client

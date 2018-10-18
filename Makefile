@@ -82,4 +82,4 @@ t: test
 .PHONY: run
 # target: run - Runs example
 run: $(VIRTUAL_ENV)
-	@$(VIRTUAL_ENV)/bin/muffin example.app run --reload --timeout=300
+	@$(VIRTUAL_ENV)/bin/muffin example.app run --reload --timeout=300 --workers=1
