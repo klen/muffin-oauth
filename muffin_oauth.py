@@ -109,7 +109,7 @@ class Plugin(BasePlugin):
 
         return client
 
-    async def refresh(self, client_name, refresh_token, **params):
+    def refresh(self, client_name, refresh_token, **params):
         """Get refresh token.
 
         :param client_name: A name one of configured clients
