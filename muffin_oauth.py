@@ -3,7 +3,7 @@ from hashlib import sha1
 from random import SystemRandom
 
 import muffin
-from aioauth_client import * # noqa
+from aioauth_client import ClientRegistry, OAuth1Client, OAuth2Client
 from muffin.plugins import BasePlugin
 from muffin_session import Plugin as SPlugin
 
@@ -55,12 +55,6 @@ class Plugin(BasePlugin):
         :param request: Web request
         :param redirect_uri: An URI for authorization redirect
         """
-        if client_name not in self.cfg.clients:
-            raise OAuthException('Unconfigured client: %s' % client_name)
-
-        if client_name not in ClientRegistry.clients:
-            raise OAuthException('Unsupported services: %s' % client_name)
-
         client = self.client(client_name, logger=self.app.logger)
 
         redirect_uri = redirect_uri or self.cfg.redirect_uri or '%s://%s%s' % (
@@ -114,3 +108,13 @@ class Plugin(BasePlugin):
             return client, await client.get_access_token(code, redirect_uri=redirect_uri)
 
         return client
+
+    async def refresh(self, client_name, refresh_token, **params):
+        """Get refresh token.
+
+        :param client_name: A name one of configured clients
+        :param redirect_uri: An URI for authorization redirect
+        :returns: a coroutine
+        """
+        client = self.client(client_name, logger=self.app.logger)
+        return client.get_access_token(refresh_token, grant_type='refresh_token', **params)
