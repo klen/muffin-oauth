@@ -66,8 +66,10 @@ class Plugin(BasePlugin):
             if not oauth_verifier:
 
                 # Get request credentials
-                token, secret = await client.get_request_token(
+                data = await client.get_request_token(
                     oauth_callback=redirect_uri)
+
+                token, secret = data[:2]
 
                 # Save the credentials in current user session
                 session['oauth_token'] = token
