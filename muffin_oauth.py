@@ -3,7 +3,7 @@ from hashlib import sha1
 from random import SystemRandom
 
 import muffin
-from aioauth_client import ClientRegistry, OAuth1Client, OAuth2Client
+from aioauth_client import ClientRegistry, OAuth2Client
 from muffin.plugins import BasePlugin
 from muffin_session import Plugin as SPlugin
 
@@ -48,6 +48,21 @@ class Plugin(BasePlugin):
         params = dict(self.cfg.clients[client_name], **params)
         return ClientRegistry.clients[client_name](**params)
 
+    async def authorize(self, client, session, redirect_uri=None, **params):
+        """Get authorization URL."""
+        if isinstance(client, OAuth2Client):
+            state = sha1(str(random()).encode('ascii')).hexdigest()
+            session['oauth_secret'] = state
+            return client.get_authorize_url(redirect_uri=redirect_uri, state=state, **params)
+
+        token, secret, _ = await client.get_request_token(oauth_callback=redirect_uri)
+
+        # Save the credentials in current user session
+        session['oauth_token'] = token
+        session['oauth_token_secret'] = secret
+
+        return client.get_authorize_url()
+
     async def login(self, client_name, request, redirect_uri=None, **params):
         """Process login with OAuth.
 
@@ -61,43 +76,10 @@ class Plugin(BasePlugin):
             request.scheme, request.host, request.path)
         session = await self.app.ps.session(request)
 
-        if isinstance(client, OAuth1Client):
-            oauth_verifier = request.query.get('oauth_verifier')
-            if not oauth_verifier:
-
-                # Get request credentials
-                data = await client.get_request_token(
-                    oauth_callback=redirect_uri)
-
-                token, secret = data[:2]
-
-                # Save the credentials in current user session
-                session['oauth_token'] = token
-                session['oauth_token_secret'] = secret
-
-                url = client.get_authorize_url()
-                raise muffin.HTTPFound(url)
-
-            # Check request_token
-            oauth_token = request.query.get('oauth_token')
-            if session['oauth_token'] != oauth_token:
-                raise muffin.HTTPForbidden(reason='Invalid token.')
-
-            client.oauth_token = oauth_token
-            client.oauth_token_secret = session.get('oauth_token_secret')
-
-            # Get access tokens
-            return client, await client.get_access_token(oauth_verifier)
-
         if isinstance(client, OAuth2Client):
             code = request.query.get('code')
             if not code:
-
-                # Authorize an user
-                state = sha1(str(random()).encode('ascii')).hexdigest()
-                session['oauth_secret'] = state
-                url = client.get_authorize_url(
-                    redirect_uri=redirect_uri, state=state, **params)
+                url = await self.authorize(client, session, redirect_uri, **params)
                 raise muffin.HTTPFound(url)
 
             # Check state
@@ -109,7 +91,21 @@ class Plugin(BasePlugin):
             # Get access token
             return client, await client.get_access_token(code, redirect_uri=redirect_uri)
 
-        return client
+        oauth_verifier = request.query.get('oauth_verifier')
+        if not oauth_verifier:
+            url = await self.authorize(client, session, redirect_uri, **params)
+            raise muffin.HTTPFound(url)
+
+        # Check request_token
+        oauth_token = request.query.get('oauth_token')
+        if session['oauth_token'] != oauth_token:
+            raise muffin.HTTPForbidden(reason='Invalid token.')
+
+        client.oauth_token = oauth_token
+        client.oauth_token_secret = session.get('oauth_token_secret')
+
+        # Get access tokens
+        return client, await client.get_access_token(oauth_verifier)
 
     def refresh(self, client_name, refresh_token, **params):
         """Get refresh token.
