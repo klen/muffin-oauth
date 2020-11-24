@@ -63,7 +63,7 @@ class Plugin(BasePlugin):
 
         return client.get_authorize_url()
 
-    async def login(self, client_name, request, redirect_uri=None, **params):
+    async def login(self, client_name, request, redirect_uri=None, headers=None, **params):
         """Process login with OAuth.
 
         :param client_name: A name one of configured clients
@@ -89,7 +89,8 @@ class Plugin(BasePlugin):
                 raise muffin.HTTPForbidden(reason='Invalid token "%s".' % oauth_secret)
 
             # Get access token
-            return client, await client.get_access_token(code, redirect_uri=redirect_uri)
+            return client, await client.get_access_token(
+                code, redirect_uri=redirect_uri, headers=headers)
 
         oauth_verifier = request.query.get('oauth_verifier')
         if not oauth_verifier:
@@ -105,7 +106,7 @@ class Plugin(BasePlugin):
         client.oauth_token_secret = session.get('oauth_token_secret')
 
         # Get access tokens
-        return client, await client.get_access_token(oauth_verifier)
+        return client, await client.get_access_token(oauth_verifier, headers=headers)
 
     def refresh(self, client_name, refresh_token, **params):
         """Get refresh token.
