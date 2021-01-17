@@ -79,7 +79,7 @@ test: $(VIRTUAL_ENV)/bin/py.test
 .PHONY: t
 t: test
 
-.PHONY: run
-# target: run - Runs example
-run: $(VIRTUAL_ENV)
-	@$(VIRTUAL_ENV)/bin/muffin example.app run --reload --timeout=300 --workers=1
+.PHONY: example
+# target: example - Runs example
+example: $(VIRTUAL_ENV)
+	@$(VIRTUAL_ENV)/bin/uvicorn example:app --reload --port 5000

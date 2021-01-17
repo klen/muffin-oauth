@@ -1,3 +1,9 @@
+2021-01-17  klen
+
+	* Support Muffin > 0.40
+	* Support Trio
+	* Drop OAuth1 Support
+
 2015-04-06  klen
 
 	* Version 0.1.0

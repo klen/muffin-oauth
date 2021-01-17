@@ -1,18 +1,15 @@
 """Support OAuth in Muffin Framework."""
 from hashlib import sha1
 from random import SystemRandom
-
 import muffin
-from aioauth_client import ClientRegistry, OAuth2Client
-from muffin.plugins import BasePlugin
-from muffin_session import Plugin as SPlugin
+from aioauth_client import ClientRegistry
+from muffin.plugin import BasePlugin
 
 
 __version__ = "0.5.4"
 __project__ = "muffin-oauth"
 __author__ = "Kirill Klenov <horneds@gmail.com>"
 __license__ = "MIT"
-
 
 random = SystemRandom().random
 
@@ -33,9 +30,6 @@ class Plugin(BasePlugin):
         'clients': {},
         'redirect_uri': None,
     }
-    dependencies = {
-        'session': SPlugin
-    }
 
     def client(self, client_name, **params):
         """Initialize OAuth client from registry."""
@@ -50,18 +44,9 @@ class Plugin(BasePlugin):
 
     async def authorize(self, client, session, redirect_uri=None, **params):
         """Get authorization URL."""
-        if isinstance(client, OAuth2Client):
-            state = sha1(str(random()).encode('ascii')).hexdigest()
-            session['oauth_secret'] = state
-            return client.get_authorize_url(redirect_uri=redirect_uri, state=state, **params)
-
-        token, secret, _ = await client.get_request_token(oauth_callback=redirect_uri)
-
-        # Save the credentials in current user session
-        session['oauth_token'] = token
-        session['oauth_token_secret'] = secret
-
-        return client.get_authorize_url()
+        state = sha1(str(random()).encode('ascii')).hexdigest()
+        session['muffin_oauth'] = state
+        return client.get_authorize_url(redirect_uri=redirect_uri, state=state, **params)
 
     async def login(self, client_name, request, redirect_uri=None, headers=None, **params):
         """Process login with OAuth.
@@ -71,42 +56,29 @@ class Plugin(BasePlugin):
         :param redirect_uri: An URI for authorization redirect
         """
         client = self.client(client_name, logger=self.app.logger)
+        session = self.app.plugins['session']
 
-        redirect_uri = redirect_uri or self.cfg.redirect_uri or '%s://%s%s' % (
-            request.scheme, request.host, request.path)
-        session = await self.app.ps.session(request)
+        redirect_uri = redirect_uri or self.cfg.redirect_uri or str(request.url)
+        ses = session.load_from_request(request)
 
-        if isinstance(client, OAuth2Client):
-            code = request.query.get('code')
-            if not code:
-                url = await self.authorize(client, session, redirect_uri, **params)
-                raise muffin.HTTPFound(url)
+        code = request.query.get('code')
+        if not code:
+            url = await self.authorize(client, ses, redirect_uri, **params)
+            res = muffin.ResponseRedirect(url)
+            session.save_to_response(ses, res)
+            raise res
 
-            # Check state
-            state = request.query.get('state')
-            oauth_secret = session.pop('oauth_secret', '')
-            if oauth_secret != state:
-                raise muffin.HTTPForbidden(reason='Invalid token "%s".' % oauth_secret)
+        # Check state
+        state = request.query.get('state')
+        stored_state = ses.pop('muffin_oauth', '')
+        if stored_state != state:
+            raise muffin.ResponseError(406, 'Invalid state: "%s"' % stored_state)
 
-            # Get access token
-            return client, await client.get_access_token(
-                code, redirect_uri=redirect_uri, headers=headers)
-
-        oauth_verifier = request.query.get('oauth_verifier')
-        if not oauth_verifier:
-            url = await self.authorize(client, session, redirect_uri, **params)
-            raise muffin.HTTPFound(url)
-
-        # Check request_token
-        oauth_token = request.query.get('oauth_token')
-        if session['oauth_token'] != oauth_token:
-            raise muffin.HTTPForbidden(reason='Invalid token.')
-
-        client.oauth_token = oauth_token
-        client.oauth_token_secret = session.get('oauth_token_secret')
-
-        # Get access tokens
-        return client, await client.get_access_token(oauth_verifier, headers=headers)
+        # Get access token
+        return (
+            client,
+            await client.get_access_token(code, redirect_uri=redirect_uri, headers=headers)
+        )
 
     def refresh(self, client_name, refresh_token, **params):
         """Get refresh token.

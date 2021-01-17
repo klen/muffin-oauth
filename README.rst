@@ -3,19 +3,17 @@ Muffin-OAuth
 
 .. _description:
 
-Muffin-OAuth -- Support OAUTH authentication in Muffin Framework.
+**Muffin-OAuth** -- Support OAuth authentication for Muffin_ Framework.
 
 .. _badges:
 
-.. image:: http://img.shields.io/travis/klen/muffin-oauth.svg?style=flat-square
-    :target: http://travis-ci.org/klen/muffin-oauth
-    :alt: Build Status
+.. image:: https://github.com/klen/muffin-oauth/workflows/tests/badge.svg
+    :target: https://github.com/klen/muffin-oauth/actions
+    :alt: Tests Status
 
-.. image:: http://img.shields.io/pypi/v/muffin-oauth.svg?style=flat-square
-    :target: https://pypi.python.org/pypi/muffin-oauth
-
-.. image:: http://img.shields.io/pypi/dm/muffin-oauth.svg?style=flat-square
-    :target: https://pypi.python.org/pypi/muffin-oauth
+.. image:: https://img.shields.io/pypi/v/muffin-oauth
+    :target: https://pypi.org/project/muffin-oauth/
+    :alt: PYPI Version
 
 .. _contents:
 
@@ -26,7 +24,7 @@ Muffin-OAuth -- Support OAUTH authentication in Muffin Framework.
 Requirements
 =============
 
-- python >= 3.3
+- python >= 3.8
 
 .. _installation:
 
@@ -42,18 +40,24 @@ Installation
 Usage
 =====
 
-See example application.
-Run with command: ::
+Get OAuth Access/Refresh Tokens
+-------------------------------
 
-    $ make run
+See an example application in `example.py`.
+Run the example with command: ::
 
-And open http://fuf.me:5000 in your browser.
+    $ make example
+
+And open http://localhost:5000 in your browser.
+
+Load resouces with access tokens
+--------------------------------
 
 .. code:: python
 
     # OAuth2
-    client = app.ps.oauth.client('github', access_token='...')
-    resource = yield from client.request('GET', 'user')
+    client = oauth.client('github', access_token='...')
+    resource = await client.request('GET', 'user')
 
 .. _bugtracker:
 
@@ -80,19 +84,11 @@ Contributors
 .. _license:
 
 License
-=======
+========
 
 Licensed under a `MIT license`_.
-
-If you wish to express your appreciation for the project, you are welcome to send
-a postcard to: ::
-
-    Kirill Klenov
-    pos. Severny 8-3
-    MO, Istra, 143500
-    Russia
-
 .. _links:
 
+.. _Muffin: https://github.com/klen/muffin
 .. _klen: https://github.com/klen
 .. _MIT license: http://opensource.org/licenses/MIT
