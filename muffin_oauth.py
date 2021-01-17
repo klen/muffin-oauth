@@ -6,7 +6,7 @@ from aioauth_client import ClientRegistry
 from muffin.plugin import BasePlugin
 
 
-__version__ = "0.5.4"
+__version__ = "0.6.0"
 __project__ = "muffin-oauth"
 __author__ = "Kirill Klenov <horneds@gmail.com>"
 __license__ = "MIT"
