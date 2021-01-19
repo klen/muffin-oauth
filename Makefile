@@ -1,4 +1,4 @@
-VIRTUAL_ENV=$(shell echo "$${VIRTUAL_ENV:-'.env'}")
+VIRTUAL_ENV ?= env
 
 all: $(VIRTUAL_ENV)
 
@@ -22,9 +22,8 @@ clean:
 .PHONY: release
 VERSION?=minor
 # target: release - Bump version
-release:
-	@$(VIRTUAL_ENV)/bin/pip install bumpversion
-	@$(VIRTUAL_ENV)/bin/bumpversion $(VERSION)
+release: $(VIRTUAL_ENV)
+	@$(VIRTUAL_ENV)/bin/bump2version $(VERSION)
 	@git checkout master
 	@git merge develop
 	@git checkout develop
@@ -48,12 +47,12 @@ major:
 
 .PHONY: register
 # target: register - Register module on PyPi
-register:
+register: $(VIRTUAL_ENV)
 	@$(VIRTUAL_ENV)/bin/python setup.py register
 
 .PHONY: upload
 # target: upload - Upload module on PyPi
-upload: clean
+upload: clean $(VIRTUAL_ENV)
 	@$(VIRTUAL_ENV)/bin/pip install twine wheel
 	@$(VIRTUAL_ENV)/bin/python setup.py sdist bdist_wheel
 	@$(VIRTUAL_ENV)/bin/twine upload dist/*
@@ -62,19 +61,15 @@ upload: clean
 #  Development
 # =============
 
-$(VIRTUAL_ENV): requirements.txt
-	@[ -d $(VIRTUAL_ENV) ] || virtualenv --no-site-packages --python=python3 $(VIRTUAL_ENV)
-	@$(VIRTUAL_ENV)/bin/pip install -r requirements.txt
+$(VIRTUAL_ENV): setup.cfg
+	@[ -d $(VIRTUAL_ENV) ] || python -m venv $(VIRTUAL_ENV)
+	@$(VIRTUAL_ENV)/bin/pip install -e .[tests,build,example]
 	@touch $(VIRTUAL_ENV)
-
-$(VIRTUAL_ENV)/bin/py.test: $(VIRTUAL_ENV) requirements-tests.txt
-	@$(VIRTUAL_ENV)/bin/pip install -r requirements-tests.txt
-	@touch $(VIRTUAL_ENV)/bin/py.test
 
 .PHONY: test
 # target: test - Runs tests
-test: $(VIRTUAL_ENV)/bin/py.test
-	@$(VIRTUAL_ENV)/bin/py.test -xs tests.py
+test: $(VIRTUAL_ENV)
+	@$(VIRTUAL_ENV)/bin/pytest tests.py
 
 .PHONY: t
 t: test

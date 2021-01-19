@@ -1,3 +1,0 @@
-aioauth-client  >= 0.25.4
-muffin          >= 0.41.7
-muffin_session  >= 0.7.4
