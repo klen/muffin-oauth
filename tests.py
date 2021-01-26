@@ -60,7 +60,7 @@ async def test_muffin_oauth(client):
     assert res.status_code == 307
     assert res.headers['location'].startswith('https://github.com/login/oauth')
     assert res.cookies['session']
-    ses = jwt.decode(res.cookies['session'], options={'verify_signature': False})
+    ses = jwt.decode(res.cookies['session'].value, options={'verify_signature': False})
     assert ses['muffin_oauth']
     assert ses['muffin_oauth'] in res.headers['location']
 
@@ -74,4 +74,4 @@ async def test_muffin_oauth(client):
         mocked.return_value = {'access_token': 'test_passed'}
         res = await client.get('/github?code=000&state=%s' % state)
         assert res.status_code == 200
-        assert res.json() == {'access_token': 'test_passed'}
+        assert await res.json() == {'access_token': 'test_passed'}

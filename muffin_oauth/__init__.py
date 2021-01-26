@@ -1,9 +1,12 @@
 """Support OAuth in Muffin Framework."""
+import typing as t
 from hashlib import sha1
 from random import SystemRandom
+
 import muffin
-from aioauth_client import ClientRegistry
+from aioauth_client import ClientRegistry, Client
 from muffin.plugin import BasePlugin
+from muffin_session import Session
 
 
 __version__ = "0.6.1"
@@ -26,12 +29,12 @@ class Plugin(BasePlugin):
     """Support OAuth."""
 
     name = 'oauth'
-    defaults = {
+    defaults: t.Dict = {
         'clients': {},
         'redirect_uri': None,
     }
 
-    def client(self, client_name, **params):
+    def client(self, client_name: str, **params) -> Client:
         """Initialize OAuth client from registry."""
         if client_name not in self.cfg.clients:
             raise OAuthException('Unconfigured client: %s' % client_name)
@@ -42,13 +45,16 @@ class Plugin(BasePlugin):
         params = dict(self.cfg.clients[client_name], **params)
         return ClientRegistry.clients[client_name](**params)
 
-    async def authorize(self, client, session, redirect_uri=None, **params):
+    async def authorize(
+            self, client: Client, session: Session, redirect_uri: str = None, **params) -> str:
         """Get authorization URL."""
         state = sha1(str(random()).encode('ascii')).hexdigest()
         session['muffin_oauth'] = state
         return client.get_authorize_url(redirect_uri=redirect_uri, state=state, **params)
 
-    async def login(self, client_name, request, redirect_uri=None, headers=None, **params):
+    async def login(
+            self, client_name: str, request: muffin.Request, redirect_uri: str = None,
+            headers: t.Dict = None, **params) -> t.Tuple[Client, t.Tuple[str, t.Any]]:
         """Process login with OAuth.
 
         :param client_name: A name one of configured clients
@@ -59,13 +65,13 @@ class Plugin(BasePlugin):
         session = self.app.plugins['session']
 
         redirect_uri = redirect_uri or self.cfg.redirect_uri or str(request.url)
-        ses = session.load_from_request(request)
+        ses = session.load_from_request(request)  # type: ignore
 
         code = request.query.get('code')
         if not code:
             url = await self.authorize(client, ses, redirect_uri, **params)
             res = muffin.ResponseRedirect(url)
-            session.save_to_response(ses, res)
+            session.save_to_response(ses, res)  # type: ignore
             raise res
 
         # Check state
@@ -80,7 +86,7 @@ class Plugin(BasePlugin):
             await client.get_access_token(code, redirect_uri=redirect_uri, headers=headers)
         )
 
-    def refresh(self, client_name, refresh_token, **params):
+    def refresh(self, client_name: str, refresh_token: str, **params) -> t.Tuple[str, t.Any]:
         """Get refresh token.
 
         :param client_name: A name one of configured clients
