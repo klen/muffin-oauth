@@ -4,6 +4,7 @@ import jwt
 import muffin
 import muffin_session
 import pytest
+import sys
 
 
 @pytest.fixture(params=[
@@ -12,6 +13,13 @@ import pytest
 ], autouse=True)
 def anyio_backend(request):
     return request.param
+
+
+# XXX: python 3.7
+def to_coro(value):
+    async def coro():
+        return value
+    return coro()
 
 
 @pytest.fixture
@@ -72,6 +80,12 @@ async def test_muffin_oauth(client):
 
     with mock.patch('aioauth_client.OAuth2Client._request') as mocked:
         mocked.return_value = {'access_token': 'test_passed'}
+        if sys.version_info < (3, 8):
+            mocked.side_effect = [
+                to_coro(mocked.return_value),
+                to_coro(mocked.return_value),
+            ]
+
         res = await client.get('/github?code=000&state=%s' % state)
         assert res.status_code == 200
         assert await res.json() == {'access_token': 'test_passed'}

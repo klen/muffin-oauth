@@ -78,7 +78,7 @@ class Plugin(BasePlugin):
         state = request.query.get('state')
         stored_state = ses.pop('muffin_oauth', '')
         if stored_state != state:
-            raise muffin.ResponseError(406, 'Invalid state: "%s"' % stored_state)
+            raise muffin.ResponseError.NOT_ACCEPTABLE('Invalid state: "%s"' % stored_state)
 
         # Get access token
         return (
