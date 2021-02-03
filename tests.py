@@ -2,9 +2,9 @@ from unittest import mock
 
 import jwt
 import muffin
-import muffin_session
 import pytest
 import sys
+from yarl import URL
 
 
 @pytest.fixture(params=[
@@ -36,12 +36,11 @@ def app():
         }
     })
 
-    muffin_session.Plugin(app, secret_key='tests')
     oauth = muffin_oauth.Plugin(app)
 
     @app.route('/github')
     async def auth(request):
-        client, (token, data) = await oauth.login('github', request)
+        client, token, data = await oauth.login('github', request)
         return await client.request('GET', '/user')
 
     return app
@@ -63,20 +62,18 @@ def test_client(app):
         oauth.client('unknown')
 
 
-async def test_muffin_oauth(client):
+async def test_muffin_oauth(app, client):
+    from muffin_oauth import sign
+
     res = await client.get('/github', allow_redirects=False)
     assert res.status_code == 307
-    assert res.headers['location'].startswith('https://github.com/login/oauth')
-    assert res.cookies['session']
-    ses = jwt.decode(res.cookies['session'].value, options={'verify_signature': False})
-    assert ses['muffin_oauth']
-    assert ses['muffin_oauth'] in res.headers['location']
+    location = URL(res.headers['location'])
+    assert location.host == 'github.com'
+    state = location.query.get('state')
+    assert state
 
     res = await client.get('/github?code=000')
     assert res.status_code == 406
-
-    ses = jwt.decode(client.cookies['session'].value, options={'verify_signature': False})
-    state = ses['muffin_oauth']
 
     with mock.patch('aioauth_client.OAuth2Client._request') as mocked:
         mocked.return_value = {'access_token': 'test_passed'}

@@ -24,28 +24,11 @@ app = muffin.Application(
             'client_secret': '21ff23d9f1cad775daee6a38d230e1ee05b04f7c',
             'scope': 'user:email',
         },
-        'bitbucket': {
-            'consumer_key': '4DKzbyW8JSbnkFyRS5',
-            'consumer_secret': 'AvzZhtvRJhrEJMsGAMsPEuHTRWdMPX9z',
-        },
-        'twitter': {
-            'consumer_key': 'oUXo1M7q1rlsPXm4ER3dWnMt8',
-            'consumer_secret': 'YWzEvXZJO9PI6f9w2FtwUJenMvy9SPLrHOvnNkVkc5LdYjKKup',
-        },
-        'facebook': {
-            'client_id': '384739235070641',
-            'client_secret': '8e3374a4e1e91a2bd5b830a46208c15a',
-            'scope': 'email',
-        },
         'google': {
             'client_id': '150775235058-9fmas709maee5nn053knv1heov12sh4n.apps.googleusercontent.com',  # noqa
             'client_secret': 'df3JwpfRf8RIBz-9avNW8Gx7',
             'scope': 'profile email',
         },
-        'yandex': {
-            'client_id': 'e19388a76a824b3385f38beec67f98f1',
-            'client_secret': '1d2e6fdcc23b45849def6a34b43ac2d8',
-        }
     })
 
 session = muffin_session.Plugin(app, secret_key='Example')
@@ -64,15 +47,9 @@ async def index(request):
             </header>
             <ul class="nav flex-column mt-5">
                 <li class="nav-item">
-                    <a class="nav-link" href="/oauth/bitbucket">Login with Bitbucket</a></li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/oauth/facebook">Login with Facebook</a></li>
-                <li class="nav-item">
                     <a class="nav-link" href="/oauth/github">Login with Github</a></li>
                 <li class="nav-item">
                     <a class="nav-link" href="/oauth/google">Login with Google</a></li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/oauth/yandex">Login with Yandex</a></li>
             </ul>
         </div>
     """
@@ -82,7 +59,7 @@ async def index(request):
 async def oauth_info(request):
     """Oauth example."""
     provider = request.path_params.get('provider')
-    client, _ = await oauth.login(provider, request)
+    client, *_ = await oauth.login(provider, request)
     user, data = await client.user_info()
     return f"""
         <link rel="stylesheet"

@@ -1,12 +1,13 @@
 """Support OAuth in Muffin Framework."""
+import base64
+import hmac
 import typing as t
-from hashlib import sha1
+from hashlib import sha1, sha512
 from random import SystemRandom
 
 import muffin
 from aioauth_client import ClientRegistry, Client
 from muffin.plugin import BasePlugin
-from muffin_session import Session
 
 
 __version__ = "0.8.0"
@@ -32,6 +33,7 @@ class Plugin(BasePlugin):
     defaults: t.Dict = {
         'clients': {},
         'redirect_uri': None,
+        'secret': 'important:replace_me_asap!',
     }
 
     def client(self, client_name: str, **params) -> Client:
@@ -46,15 +48,15 @@ class Plugin(BasePlugin):
         return ClientRegistry.clients[client_name](**params)
 
     async def authorize(
-            self, client: Client, session: Session, redirect_uri: str = None, **params) -> str:
+            self, client: Client, redirect_uri: str = None, **params) -> str:
         """Get authorization URL."""
         state = sha1(str(random()).encode('ascii')).hexdigest()
-        session['muffin_oauth'] = state
+        state = f"{ state }.{ sign(state, self.cfg.secret) }"
         return client.get_authorize_url(redirect_uri=redirect_uri, state=state, **params)
 
     async def login(
             self, client_name: str, request: muffin.Request, redirect_uri: str = None,
-            headers: t.Dict = None, **params) -> t.Tuple[Client, t.Tuple[str, t.Any]]:
+            headers: t.Dict = None, **params) -> t.Tuple[Client, str, t.Any]:
         """Process login with OAuth.
 
         :param client_name: A name one of configured clients
@@ -62,29 +64,29 @@ class Plugin(BasePlugin):
         :param redirect_uri: An URI for authorization redirect
         """
         client = self.client(client_name, logger=self.app.logger)
-        session = self.app.plugins['session']
 
-        redirect_uri = redirect_uri or self.cfg.redirect_uri or str(request.url)
-        ses = session.load_from_request(request)  # type: ignore
+        redirect_uri = redirect_uri or self.cfg.redirect_uri
+        if not redirect_uri:
+            redirect_uri = str(request.url.with_query(''))
 
         code = request.query.get('code')
         if not code:
-            url = await self.authorize(client, ses, redirect_uri, **params)
-            res = muffin.ResponseRedirect(url)
-            session.save_to_response(ses, res)  # type: ignore
-            raise res
+            url = await self.authorize(client, redirect_uri, **params)
+            raise muffin.ResponseRedirect(url)
 
         # Check state
         state = request.query.get('state')
-        stored_state = ses.pop('muffin_oauth', '')
-        if stored_state != state:
-            raise muffin.ResponseError.NOT_ACCEPTABLE('Invalid state: "%s"' % stored_state)
+        if not state:
+            raise muffin.ResponseError.NOT_ACCEPTABLE('Invalid state')
+
+        state, _, sig = state.partition('.')
+        if sig != sign(state, self.cfg.secret):
+            raise muffin.ResponseError.NOT_ACCEPTABLE('Invalid state')
 
         # Get access token
-        return (
-            client,
-            await client.get_access_token(code, redirect_uri=redirect_uri, headers=headers)
-        )
+        token, data = await client.get_access_token(
+            code, redirect_uri=redirect_uri, headers=headers)
+        return client, token, data
 
     def refresh(self, client_name: str, refresh_token: str, **params) -> t.Tuple[str, t.Any]:
         """Get refresh token.
@@ -95,3 +97,9 @@ class Plugin(BasePlugin):
         """
         client = self.client(client_name, logger=self.app.logger)
         return client.get_access_token(refresh_token, grant_type='refresh_token', **params)
+
+
+def sign(msg: str, key: str) -> str:
+    """Sign the given message with the key."""
+    sig = hmac.new(key.encode('utf-8'), msg.encode('utf-8'), sha512).digest()
+    return base64.urlsafe_b64encode(sig).decode('utf-8')
