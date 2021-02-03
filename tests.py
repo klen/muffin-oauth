@@ -1,6 +1,5 @@
 from unittest import mock
 
-import jwt
 import muffin
 import pytest
 import sys
@@ -63,8 +62,6 @@ def test_client(app):
 
 
 async def test_muffin_oauth(app, client):
-    from muffin_oauth import sign
-
     res = await client.get('/github', allow_redirects=False)
     assert res.status_code == 307
     location = URL(res.headers['location'])
