@@ -10,7 +10,7 @@ from aioauth_client import ClientRegistry, Client
 from muffin.plugin import BasePlugin
 
 
-__version__ = "0.9.1"
+__version__ = "0.9.2"
 __project__ = "muffin-oauth"
 __author__ = "Kirill Klenov <horneds@gmail.com>"
 __license__ = "MIT"
