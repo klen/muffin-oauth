@@ -62,7 +62,7 @@ def test_client(app):
 
 
 async def test_muffin_oauth(app, client):
-    res = await client.get('/github', allow_redirects=False)
+    res = await client.get('/github', follow_redirect=False)
     assert res.status_code == 307
     location = URL(res.headers['location'])
     assert location.host == 'github.com'

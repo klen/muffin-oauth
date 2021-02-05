@@ -69,13 +69,13 @@ class Plugin(BasePlugin):
         if not redirect_uri:
             redirect_uri = str(request.url.with_query(''))
 
-        code = request.query.get('code')
+        code = request.url.query.get('code')
         if not code:
             url = await self.authorize(client, redirect_uri, **params)
             raise muffin.ResponseRedirect(url)
 
         # Check state
-        state = request.query.get('state')
+        state = request.url.query.get('state')
         if not state:
             raise muffin.ResponseError.NOT_ACCEPTABLE('Invalid state')
 
