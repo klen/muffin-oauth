@@ -6,14 +6,6 @@ import sys
 from yarl import URL
 
 
-@pytest.fixture(params=[
-    pytest.param('asyncio'),
-    pytest.param('trio'),
-], autouse=True)
-def anyio_backend(request):
-    return request.param
-
-
 # XXX: python 3.7
 def to_coro(value):
     async def coro():
