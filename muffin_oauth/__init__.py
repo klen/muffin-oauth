@@ -6,7 +6,7 @@ from hashlib import sha1, sha512
 from random import SystemRandom
 
 from aioauth_client import ClientRegistry, Client
-from muffin import Request, ResponseRedirect, ResponseError
+from muffin import Request, ResponseRedirect, ResponseError, Application
 from muffin.plugins import BasePlugin
 
 
@@ -63,7 +63,8 @@ class Plugin(BasePlugin):
         :param request: Web request
         :param redirect_uri: An URI for authorization redirect
         """
-        client = self.client(client_name, logger=self.app.logger)
+        app = t.cast(Application, self.app)
+        client = self.client(client_name, logger=app.logger)
 
         redirect_uri = redirect_uri or self.cfg.redirect_uri
         if not redirect_uri:
@@ -95,7 +96,8 @@ class Plugin(BasePlugin):
         :param redirect_uri: An URI for authorization redirect
         :returns: a coroutine
         """
-        client = self.client(client_name, logger=self.app.logger)
+        app = t.cast(Application, self.app)
+        client = self.client(client_name, logger=app.logger)
         return client.get_access_token(refresh_token, grant_type='refresh_token', **params)
 
 
