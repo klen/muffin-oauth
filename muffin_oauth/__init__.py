@@ -5,9 +5,9 @@ import typing as t
 from hashlib import sha1, sha512
 from random import SystemRandom
 
-import muffin
 from aioauth_client import ClientRegistry, Client
-from muffin.plugin import BasePlugin
+from muffin import Request, ResponseRedirect, ResponseError
+from muffin.plugins import BasePlugin
 
 
 __version__ = "0.9.4"
@@ -55,7 +55,7 @@ class Plugin(BasePlugin):
         return client.get_authorize_url(redirect_uri=redirect_uri, state=state, **params)
 
     async def login(
-            self, client_name: str, request: muffin.Request, redirect_uri: str = None,
+            self, client_name: str, request: Request, redirect_uri: str = None,
             headers: t.Dict = None, **params) -> t.Tuple[Client, str, t.Any]:
         """Process login with OAuth.
 
@@ -72,16 +72,16 @@ class Plugin(BasePlugin):
         code = request.url.query.get('code')
         if not code:
             url = await self.authorize(client, redirect_uri, **params)
-            raise muffin.ResponseRedirect(url)
+            raise ResponseRedirect(url)
 
         # Check state
         state = request.url.query.get('state')
         if not state:
-            raise muffin.ResponseError.NOT_ACCEPTABLE('Invalid state')
+            raise ResponseError.NOT_ACCEPTABLE('Invalid state')
 
         state, _, sig = state.partition('.')
         if sig != sign(state, self.cfg.secret):
-            raise muffin.ResponseError.NOT_ACCEPTABLE('Invalid state')
+            raise ResponseError.NOT_ACCEPTABLE('Invalid state')
 
         # Get access token
         token, data = await client.get_access_token(
