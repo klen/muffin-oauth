@@ -10,7 +10,7 @@ from muffin import Request, ResponseRedirect, ResponseError, Application
 from muffin.plugins import BasePlugin
 
 
-__version__ = "1.1.2"
+__version__ = "2.0.0"
 __project__ = "muffin-oauth"
 __author__ = "Kirill Klenov <horneds@gmail.com>"
 __license__ = "MIT"
