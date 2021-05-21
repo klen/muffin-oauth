@@ -47,8 +47,7 @@ class Plugin(BasePlugin):
         params = dict(self.cfg.clients[client_name], **params)
         return ClientRegistry.clients[client_name](**params)
 
-    async def authorize(
-            self, client: Client, redirect_uri: str = None, **params) -> str:
+    def authorize(self, client: Client, redirect_uri: str = None, **params) -> str:
         """Get authorization URL."""
         state = sha1(str(random()).encode('ascii')).hexdigest()
         state = f"{ state }.{ sign(state, self.cfg.secret) }"
@@ -72,7 +71,7 @@ class Plugin(BasePlugin):
 
         code = request.url.query.get('code')
         if not code:
-            url = await self.authorize(client, redirect_uri, **params)
+            url = self.authorize(client, redirect_uri, **params)
             raise ResponseRedirect(url)
 
         # Check state
