@@ -1,3 +1,7 @@
+2021-10-21  horneds
+
+	* Support Python 3.10
+
 2021-01-17  klen
 
 	* Support Muffin > 0.40

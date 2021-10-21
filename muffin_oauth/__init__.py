@@ -88,16 +88,15 @@ class Plugin(BasePlugin):
             code, redirect_uri=redirect_uri, headers=headers)
         return client, token, data
 
-    def refresh(self, client_name: str, refresh_token: str, **params) -> t.Tuple[str, t.Any]:
+    async def refresh(self, client_name: str, refresh_token: str, **params) -> t.Tuple[str, t.Any]:
         """Get refresh token.
 
         :param client_name: A name one of configured clients
         :param redirect_uri: An URI for authorization redirect
-        :returns: a coroutine
         """
         app = t.cast(Application, self.app)
         client = self.client(client_name, logger=app.logger)
-        return client.get_access_token(refresh_token, grant_type='refresh_token', **params)
+        return await client.get_access_token(refresh_token, grant_type='refresh_token', **params)
 
 
 def sign(msg: str, key: str) -> str:

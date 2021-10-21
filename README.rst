@@ -15,6 +15,10 @@ Muffin-OAuth
     :target: https://pypi.org/project/muffin-oauth/
     :alt: PYPI Version
 
+.. image:: https://img.shields.io/pypi/pyversions/muffin-oauth
+    :target: https://pypi.org/project/muffin-oauth/
+    :alt: Python Versions
+
 .. _contents:
 
 .. contents::
