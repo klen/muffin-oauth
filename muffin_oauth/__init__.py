@@ -9,7 +9,7 @@ from aioauth_client import Client, ClientRegistry
 from muffin import Application, Request, ResponseError, ResponseRedirect
 from muffin.plugins import BasePlugin
 
-__version__ = "2.3.0"
+__version__ = "2.3.1"
 __project__ = "muffin-oauth"
 __author__ = "Kirill Klenov <horneds@gmail.com>"
 __license__ = "MIT"
