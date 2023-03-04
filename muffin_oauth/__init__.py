@@ -1,12 +1,12 @@
 """Support OAuth in Muffin Framework."""
 import base64
 import hmac
-from hashlib import sha1, sha512
+from hashlib import sha256, sha512
 from random import SystemRandom
 from typing import Any, Mapping, Optional, Tuple
 
 from aioauth_client import Client, ClientRegistry
-from muffin import Application, Request, ResponseError, ResponseRedirect
+from muffin import Request, ResponseError, ResponseRedirect
 from muffin.plugins import BasePlugin
 
 __version__ = "2.3.1"
@@ -17,11 +17,10 @@ __license__ = "MIT"
 random = SystemRandom().random
 
 
-class OAuthException(Exception):
+class OAuthError(Exception):
 
     """Implement an exception during OAUTH process."""
 
-    pass
 
 
 class Plugin(BasePlugin):
@@ -38,20 +37,20 @@ class Plugin(BasePlugin):
     def client(self, client_name: str, **params) -> Client:
         """Initialize OAuth client from registry."""
         if client_name not in self.cfg.clients:
-            raise OAuthException("Unconfigured client: %s" % client_name)
+            raise OAuthError("Unconfigured client: %s" % client_name)
 
         if client_name not in ClientRegistry.clients:
-            raise OAuthException("Unsupported services: %s" % client_name)
+            raise OAuthError("Unsupported services: %s" % client_name)
 
         params = dict(self.cfg.clients[client_name], **params)
         return ClientRegistry.clients[client_name](**params)
 
     def authorize(self, client: Client, redirect_uri: Optional[str] = None, **params):
         """Get authorization URL."""
-        state = sha1(str(random()).encode("ascii")).hexdigest()
+        state = sha256(str(random()).encode("ascii")).hexdigest()
         state = f"{ state }.{ sign(state, self.cfg.secret) }"
         return client.get_authorize_url(
-            redirect_uri=redirect_uri, state=state, **params
+            redirect_uri=redirect_uri, state=state, **params,
         )
 
     async def login(
@@ -91,7 +90,7 @@ class Plugin(BasePlugin):
 
         # Get access token
         token, data = await client.get_access_token(
-            code, redirect_uri=redirect_uri, headers=headers
+            code, redirect_uri=redirect_uri, headers=headers,
         )
         return client, token, data
 
@@ -103,7 +102,7 @@ class Plugin(BasePlugin):
         """
         client = self.client(client_name, logger=self.app.logger)
         return client.get_access_token(
-            refresh_token, grant_type="refresh_token", **params
+            refresh_token, grant_type="refresh_token", **params,
         )
 
 
