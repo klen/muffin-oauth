@@ -1,6 +1,6 @@
 [project]
 name = "muffin-oauth"
-version = "2.3.1"
+version = "2.4.0"
 description = "Support OAuth authentication for Muffin Framework."
 readme = "README.rst"
 requires-python = ">=3.8"
