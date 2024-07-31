@@ -27,6 +27,7 @@ repository = "https://github.com/klen/muffin-oauth"
 python = "^3.9"
 muffin = "^0"
 aioauth-client = "^0.27.2"
+uvicorn = { version = "*", optional = true }
 
 [tool.poetry.group.tests.dependencies]
 ruff = "*"
@@ -37,8 +38,8 @@ pytest-aio = { version = "*", extras = ["curio", "trio"] }
 [tool.poetry.group.dev.dependencies]
 pre-commit = "*"
 
-[tool.poetry.group.example.dependencies]
-uvicorn = "*"
+[tool.poetry.extras]
+uvicorn = ["uvicorn"]
 
 [tool.pytest.ini_options]
 addopts = "-xsv tests.py"
