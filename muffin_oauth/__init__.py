@@ -1,9 +1,12 @@
 """Support OAuth in Muffin Framework."""
+
+from __future__ import annotations
+
 import base64
 import hmac
 from hashlib import sha256, sha512
 from random import SystemRandom
-from typing import Any, Mapping, Optional, Tuple
+from typing import Any, ClassVar, Mapping, Optional
 
 from aioauth_client import Client, ClientRegistry
 from muffin import Request, ResponseError, ResponseRedirect
@@ -22,13 +25,12 @@ class OAuthError(Exception):
     """Implement an exception during OAUTH process."""
 
 
-
 class Plugin(BasePlugin):
 
     """Support OAuth."""
 
     name = "oauth"
-    defaults: Mapping[str, Any] = {
+    defaults: ClassVar = {
         "clients": {},
         "redirect_uri": None,
         "secret": "important:replace_me_asap!",
@@ -50,7 +52,9 @@ class Plugin(BasePlugin):
         state = sha256(str(random()).encode("ascii")).hexdigest()
         state = f"{ state }.{ sign(state, self.cfg.secret) }"
         return client.get_authorize_url(
-            redirect_uri=redirect_uri, state=state, **params,
+            redirect_uri=redirect_uri,
+            state=state,
+            **params,
         )
 
     async def login(
@@ -60,7 +64,7 @@ class Plugin(BasePlugin):
         redirect_uri: Optional[str] = None,
         headers: Optional[Mapping[str, str]] = None,
         **params,
-    ) -> Tuple[Client, str, Any]:
+    ) -> tuple[Client, str, Any]:
         """Process login with OAuth.
 
         :param client_name: A name one of configured clients
@@ -90,7 +94,9 @@ class Plugin(BasePlugin):
 
         # Get access token
         token, data = await client.get_access_token(
-            code, redirect_uri=redirect_uri, headers=headers,
+            code,
+            redirect_uri=redirect_uri,
+            headers=headers,
         )
         return client, token, data
 
@@ -102,7 +108,9 @@ class Plugin(BasePlugin):
         """
         client = self.client(client_name, logger=self.app.logger)
         return client.get_access_token(
-            refresh_token, grant_type="refresh_token", **params,
+            refresh_token,
+            grant_type="refresh_token",
+            **params,
         )
 
 
