@@ -1,4 +1,3 @@
-from .plugin import OAuthError, OAuthPlugin
+from .plugin import OAuthError, OAuthPlugin  # noqa: F401
 
 OAuth = Plugin = OAuthPlugin
-assert OAuthError
