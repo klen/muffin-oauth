@@ -1,98 +1,112 @@
-Muffin-OAuth
-############
+Muffin‑OAuth
+============
 
-.. _description:
-
-**Muffin-OAuth** -- Support OAuth authentication for Muffin_ Framework.
-
-.. _badges:
+**Muffin‑OAuth** adds OAuth 1 and 2 support to the Muffin_ framework, enabling both client-side and server-side authentication flows.
 
 .. image:: https://github.com/klen/muffin-oauth/workflows/tests/badge.svg
-    :target: https://github.com/klen/muffin-oauth/actions
-    :alt: Tests Status
+   :target: https://github.com/klen/muffin-oauth/actions
+   :alt: Tests Status
 
 .. image:: https://img.shields.io/pypi/v/muffin-oauth
-    :target: https://pypi.org/project/muffin-oauth/
-    :alt: PYPI Version
+   :target: https://pypi.org/project/muffin-oauth/
+   :alt: PyPI Version
 
 .. image:: https://img.shields.io/pypi/pyversions/muffin-oauth
-    :target: https://pypi.org/project/muffin-oauth/
-    :alt: Python Versions
-
-.. _contents:
+   :target: https://pypi.org/project/muffin-oauth/
+   :alt: Python Versions
 
 .. contents::
 
-.. _requirements:
-
 Requirements
-=============
+============
 
-- python >= 3.9
-
-.. _installation:
+- Python >= 3.10
+- Compatible with `asyncio`, `Trio`, and `Curio`
 
 Installation
-=============
+============
 
-**Muffin-OAuth** should be installed using pip: ::
+Install via pip:
 
     pip install muffin-oauth
-
-.. _usage:
 
 Usage
 =====
 
-Get OAuth Access/Refresh Tokens
--------------------------------
+Here's a basic example using OAuth2:
 
-See an example application in `example.py`.
-Run the example with command: ::
+.. code-block:: python
+
+    from muffin import Application
+    from muffin_oauth import OAuthPlugin
+
+    app = Application("auth-example")
+    oauth = OAuthPlugin()
+    oauth.setup(app, providers={
+        "github": {
+            "client_id": "...",
+            "client_secret": "...",
+            "authorize_url": "https://github.com/login/oauth/authorize",
+            "access_token_url": "https://github.com/login/oauth/access_token",
+            "api_base_url": "https://api.github.com"
+        }
+    })
+
+    @app.route("/")
+    async def login(request):
+        return await oauth.authorize_redirect(request, "github", redirect_uri="http://localhost:8000/callback")
+
+    @app.route("/callback")
+    async def callback(request):
+        token = await oauth.authorize_access_token(request, "github")
+        request.session["token"] = token
+        return "Logged in"
+
+    @app.route("/user")
+    async def user(request):
+        client = oauth.client("github", token=request.session.get("token"))
+        resp = await client.get("/user")
+        return resp.json()
+
+Run the example app:
 
     $ make example
+    http://localhost:5000
 
-And open http://localhost:5000 in your browser.
+Client-side usage:
 
-Load resouces with access tokens
---------------------------------
+.. code-block:: python
 
-.. code:: python
+    client = oauth.client("github", access_token="...")
+    resp = await client.request("GET", "/user")
+    user_info = resp.json()
 
-    # OAuth2
-    client = oauth.client('github', access_token='...')
-    resource = await client.request('GET', 'user')
+This supports both OAuth1 and OAuth2 flows, with automatic token handling and resource access via configured providers.
 
-.. _bugtracker:
+Testing & Security
+==================
 
-Bug tracker
-===========
+- Test coverage for major flows is provided in `tests.py`.
+- Minimal dependencies and async-native design.
+- Production-ready, MIT-licensed.
 
-If you have any suggestions, bug reports or
-annoyances please report them to the issue tracker
-at https://github.com/klen/muffin-oauth/issues
+Bug Tracker & Contributing
+==========================
 
-.. _contributing:
+Found an issue or have an idea? Report it at:
+https://github.com/klen/muffin-oauth/issues
 
-Contributing
-============
-
-Development of Muffin-OAuth happens at: https://github.com/klen/muffin-oauth
-
+Contributions welcome! Fork the repo and submit a PR.
 
 Contributors
-=============
+============
 
-* klen_ (Kirill Klenov)
-
-.. _license:
+- klen_ (Kirill Klenov)
 
 License
-========
+=======
 
-Licensed under a `MIT license`_.
-.. _links:
+Licensed under the `MIT license`_.
 
 .. _Muffin: https://github.com/klen/muffin
-.. _klen: https://github.com/klen
 .. _MIT license: http://opensource.org/licenses/MIT

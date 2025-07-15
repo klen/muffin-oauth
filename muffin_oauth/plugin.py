@@ -6,7 +6,7 @@ import base64
 import hmac
 from hashlib import sha256, sha512
 from random import SystemRandom
-from typing import Any, ClassVar, Mapping, Optional
+from typing import Any, ClassVar, Mapping
 
 from aioauth_client import Client, ClientRegistry
 from muffin import Request, ResponseError, ResponseRedirect
@@ -21,12 +21,10 @@ random = SystemRandom().random
 
 
 class OAuthError(Exception):
-
     """Implement an exception during OAUTH process."""
 
 
 class OAuthPlugin(BasePlugin):
-
     """Support OAuth."""
 
     name = "oauth"
@@ -47,7 +45,7 @@ class OAuthPlugin(BasePlugin):
         params = dict(self.cfg.clients[client_name], **params)
         return ClientRegistry.clients[client_name](**params)
 
-    def authorize(self, client: Client, redirect_uri: Optional[str] = None, **params):
+    def authorize(self, client: Client, redirect_uri: str | None = None, **params):
         """Get authorization URL."""
         state = sha256(str(random()).encode("ascii")).hexdigest()
         state = f"{ state }.{ sign(state, self.cfg.secret) }"
@@ -61,8 +59,8 @@ class OAuthPlugin(BasePlugin):
         self,
         client_name: str,
         request: Request,
-        redirect_uri: Optional[str] = None,
-        headers: Optional[Mapping[str, str]] = None,
+        redirect_uri: str | None = None,
+        headers: Mapping[str, str] | None = None,
         **params,
     ) -> tuple[Client, str, Any]:
         """Process login with OAuth.

@@ -52,7 +52,7 @@ major:
 
 $(VIRTUAL_ENV): poetry.lock .pre-commit-config.yaml
 	@[ -d $(VIRTUAL_ENV) ] || python -m venv $(VIRTUAL_ENV)
-	@poetry install --with tests,dev,example
+	@poetry install --with tests,dev
 	@poetry run pre-commit install
 	@poetry self add poetry-bumpversion
 	@touch $(VIRTUAL_ENV)
