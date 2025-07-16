@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "muffin-oauth"
-version = "2.8.0"
+version = "2.8.1"
 description = "Support OAuth authentication for Muffin Framework."
 readme = "README.md"
 license = "MIT"
