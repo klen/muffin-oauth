@@ -1,37 +1,23 @@
-Muffin‑OAuth
-============
+# Muffin‑OAuth
 
-**Muffin‑OAuth** adds OAuth 1 and 2 support to the Muffin_ framework, enabling both client-side and server-side authentication flows.
+**Muffin‑OAuth** adds OAuth 1 and 2 support to the Muffin\_ framework, enabling both client-side and server-side authentication flows.
 
-.. image:: https://github.com/klen/muffin-oauth/workflows/tests/badge.svg
-   :target: https://github.com/klen/muffin-oauth/actions
-   :alt: Tests Status
+[![Tests Status](https://github.com/klen/muffin-oauth/workflows/tests/badge.svg)](https://github.com/klen/muffin-oauth/actions)
+[![PyPI Version](https://img.shields.io/pypi/v/muffin-oauth)](https://pypi.org/project/muffin-oauth/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/muffin-oauth)](https://pypi.org/project/muffin-oauth/)
 
-.. image:: https://img.shields.io/pypi/v/muffin-oauth
-   :target: https://pypi.org/project/muffin-oauth/
-   :alt: PyPI Version
-
-.. image:: https://img.shields.io/pypi/pyversions/muffin-oauth
-   :target: https://pypi.org/project/muffin-oauth/
-   :alt: Python Versions
-
-.. contents::
-
-Requirements
-============
+# Requirements
 
 - Python >= 3.10
 - Compatible with `asyncio`, `Trio`, and `Curio`
 
-Installation
-============
+# Installation
 
 Install via pip:
 
     pip install muffin-oauth
 
-Usage
-=====
+# Usage
 
 Here's a basic example using OAuth2:
 
