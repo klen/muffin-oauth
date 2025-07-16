@@ -2,7 +2,7 @@
 name = "muffin-oauth"
 version = "2.8.0"
 description = "Support OAuth authentication for Muffin Framework."
-readme = "README.rst"
+readme = "README.md"
 license = "MIT"
 authors = ["Kirill Klenov <horneds@gmail.com>"]
 keywords = ["asgi", "asyncio", "authorization", "muffin", "oauth", "trio"]
