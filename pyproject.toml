@@ -33,7 +33,6 @@ Repository = "https://github.com/klen/muffin-oauth"
 
 [dependency-groups]
 dev = [
-  "muffin-session",
   "pre-commit",
   "pytest",
   "pytest-aio[curio, trio]",
@@ -42,7 +41,7 @@ dev = [
   "tox",
 ]
 docs = ["mkdocs-material>=9,<10"]
-example = ["muffin-session", "uvicorn"]
+example = ["uvicorn"]
 
 [tool.uv]
 default-groups = ["dev", "example"]
@@ -71,7 +70,7 @@ envlist = py311,py312,py313,py314,py315,pypy311
 [testenv]
 allowlist_externals = uv,pytest
 commands =
-  uv pip install --system -e . pytest pytest-aio
+  uv pip install --system -e . --group dev
 	pytest
 """
 

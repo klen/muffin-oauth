@@ -1,7 +1,7 @@
 """Example application.
 
 Requirements:
-    uvicorn, muffin-session
+    uvicorn
 
 Run the example with uvicorn:
 
@@ -13,7 +13,6 @@ import html
 from pprint import pformat
 
 import muffin
-import muffin_session
 
 import muffin_oauth
 
@@ -34,7 +33,6 @@ app = muffin.Application(
     },
 )
 
-session = muffin_session.Plugin(app, secret_key="Example")  # noqa: S106
 oauth = muffin_oauth.Plugin(app)
 
 

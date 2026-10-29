@@ -56,7 +56,7 @@ keyword arguments, environment variables.
 The key of a client entry is the name registered by `aioauth-client`; the value is passed to
 that client's constructor. Names available in `aioauth-client` 0.30 include `github`,
 `google`, `gitlab`, `discord`, `facebook`, `vk`, `yandex`, `twitter`, `slack`, `microsoft`,
-and others.
+and others. OAuth1 names in that list (`twitter`) are rejected with `OAuthError`.
 
 ```python
 OAUTH_CLIENTS = {

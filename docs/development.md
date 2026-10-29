@@ -36,7 +36,8 @@ per async library (`asyncio`, `trio`, `curio`) through `pytest-aio`. A focused r
 uv run pytest tests.py::test_login_state_signature
 ```
 
-`pyrefly` and `ruff` cover `muffin_oauth`, `tests.py` and `example.py`; the docs are excluded.
+`ruff` covers `muffin_oauth`, `tests.py` and `example.py`; `pyrefly` checks `muffin_oauth` only.
+The docs are excluded from both.
 
 ## Example
 
@@ -79,6 +80,6 @@ muffin_oauth/
   __init__.py     exports OAuthPlugin (OAuth, Plugin) and OAuthError
   plugin.py       the whole plugin: client registry, authorize, login, refresh, sign
 tests.py          pytest suite (root level, configured in pyproject.toml)
-example.py        runnable GitHub + Google example with muffin-session
+example.py        runnable GitHub + Google example
 docs/             this documentation
 ```

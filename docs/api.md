@@ -18,13 +18,14 @@ Options: [`clients`, `redirect_uri`, `secret`](configuration.md).
 Create a provider client from the registry.
 
 - `client_name` must be present in `clients` **and** registered by `aioauth-client`.
+- Only OAuth2 clients are accepted; an OAuth1 provider (`twitter`, ...) raises `OAuthError`.
 - `params` are merged over the configured client entry (`dict(config, **params)`), so a token
   can be supplied at call time.
 - The client gets the default logger of `aioauth-client`; `login()` and `refresh()` pass the
   application logger instead.
 
-Raises `OAuthError("Unconfigured client: <name>")` or
-`OAuthError("Unsupported services: <name>")`.
+Raises `OAuthError("Unconfigured client: <name>")`,
+`OAuthError("Unsupported services: <name>")` or `OAuthError("OAuth1 is not supported: <name>")`.
 
 ```python
 client = oauth.client("github", access_token="...")
@@ -34,7 +35,7 @@ client = oauth.client("github", access_token="...")
 
 Build the authorization URL for an already created client.
 
-- Generates a `state` value (`<hash>.<signature>`) and signs it with `secret`.
+- Generates a `state` value (`<random token>.<signature>`) and signs it with `secret`.
 - Passes `redirect_uri` and every extra `params` entry to `client.get_authorize_url()`; extra
   `params` win over the entries of the client configuration.
 - Stateless: nothing is stored. The callback must still be verified by `login()`.
@@ -56,8 +57,9 @@ Run one step of the authorization-code flow.
 - Returns the client (with `access_token` set), the access token and the raw provider
   response.
 
-Raises `OAuthError` for an unknown client and `ResponseError.NOT_ACCEPTABLE` (`406`) for a
-missing or badly signed `state`.
+Raises `OAuthError` for an unknown client, `ResponseError.BAD_REQUEST` (`400`) when the
+provider reports an error (an `error` query argument, e.g. the user denied the app) and
+`ResponseError.NOT_ACCEPTABLE` (`406`) for a missing or badly signed `state`.
 
 ```python
 client, token, data = await oauth.login("github", request)

@@ -28,23 +28,6 @@ wheels = [
 ]
 
 [[package]]
-name = "asgi-sessions"
-version = "1.3.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "asgi-tools" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ab/e1/2ea20ccd5f589e5b2228f3ee92c5f32a113c503fa30fc4f73f8a5d0c5016/asgi_sessions-1.3.0.tar.gz", hash = "sha256:e6072547e2477fadcb2e54b31c1e2edb2df1d6cf1c4ff9bfc3cc3b1a93fe6861", size = 6338, upload-time = "2025-11-06T12:39:25.075Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ab/8f/fdc18f5832370b88741b3d8284d45ca6ec0bf49c1accd288a4e315670272/asgi_sessions-1.3.0-py3-none-any.whl", hash = "sha256:d9b13b41c46078031a3e555e1af6c7c226a8d3410417754d3069dfa6a2c24e33", size = 6207, upload-time = "2025-11-06T12:39:23.995Z" },
-]
-
-[package.optional-dependencies]
-jwt = [
-    { name = "pyjwt" },
-]
-
-[[package]]
 name = "asgi-tools"
 version = "3.2.1"
 source = { registry = "https://pypi.org/simple" }
@@ -765,7 +748,6 @@ uvicorn = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "muffin-session" },
     { name = "pre-commit" },
     { name = "pyrefly" },
     { name = "pytest" },
@@ -777,7 +759,6 @@ docs = [
     { name = "mkdocs-material" },
 ]
 example = [
-    { name = "muffin-session" },
     { name = "uvicorn" },
 ]
 
@@ -791,7 +772,6 @@ provides-extras = ["uvicorn"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "muffin-session" },
     { name = "pre-commit" },
     { name = "pyrefly" },
     { name = "pytest" },
@@ -800,23 +780,7 @@ dev = [
     { name = "tox" },
 ]
 docs = [{ name = "mkdocs-material", specifier = ">=9,<10" }]
-example = [
-    { name = "muffin-session" },
-    { name = "uvicorn" },
-]
-
-[[package]]
-name = "muffin-session"
-version = "2.6.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "asgi-sessions", extra = ["jwt"] },
-    { name = "muffin" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/e2/de/71a615bd29e7fcbc02d4d0b5165a63080c4e4a08cc8f4cfdf3e7e9e80b2a/muffin_session-2.6.0.tar.gz", hash = "sha256:0e615e7e779a0b5649206f1e4d46db1aa303cfa28b02dfe03eed72a4d5e48f1b", size = 5384, upload-time = "2025-07-16T11:50:21.486Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9c/6d/c649662e8c0655d370de91e7233b8b2d7d4128512172f206f1c0970e66e5/muffin_session-2.6.0-py3-none-any.whl", hash = "sha256:558c180f0f27a6a3deaf5defba553c2856bac90f6d1d0d04ada03f12d7096935", size = 5582, upload-time = "2025-07-16T11:50:20.617Z" },
-]
+example = [{ name = "uvicorn" }]
 
 [[package]]
 name = "multidict"
@@ -1260,15 +1224,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/49/2e/ced460408999b33da6b31b0021b0f37d329e202d4169aeb164493778f25b/pygments-2.21.0.tar.gz", hash = "sha256:610ca751c9bc2492b38eb9a38a7fbc93edbbb2d7182edaf34e66ae493dee5c8c", size = 5005329, upload-time = "2026-08-17T08:02:48.824Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/71/46/17f022dd3e953bf20a04a028a21ec746d942f8d2af30fa0f124fa0e6a684/pygments-2.21.0-py3-none-any.whl", hash = "sha256:2363c69b61c4a97c838da3b130dcd6468f4848992b21a82f2a63ec34377137d9", size = 1250147, upload-time = "2026-08-17T08:02:44.912Z" },
-]
-
-[[package]]
-name = "pyjwt"
-version = "2.15.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/43/ea/5194e52748b0da83d71e082d75496eaec6e58f419f5e184786ded517e6a9/pyjwt-2.15.1.tar.gz", hash = "sha256:4f259e80cdfb6b3fc18a7de51fd1ef9ec79652f25019bae68975ca2468a34df8", size = 121252, upload-time = "2026-09-28T18:40:42.598Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/50/ca/44de4e75f8aadc457f0634be3b542815078ded46dca30efb960edeecad6e/pyjwt-2.15.1-py3-none-any.whl", hash = "sha256:42d59d631f7768a1028a64c7ff581a9bf7519804daf91fc5b6c56e30eec5e193", size = 33860, upload-time = "2026-09-28T18:40:41.429Z" },
 ]
 
 [[package]]

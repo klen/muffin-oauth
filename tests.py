@@ -84,6 +84,10 @@ async def test_login_state_signature(app, client):
     res = await client.get("/github?code=000&state=unsigned")
     assert res.status_code == 406
 
+    # Non-ASCII state must be rejected, not crash the comparison
+    res = await client.get("/github?code=000&state=%D1%85.%D1%85")
+    assert res.status_code == 406
+
 
 async def test_refresh(app):
     oauth = app.plugins["oauth"]
@@ -98,22 +102,25 @@ async def test_refresh(app):
     assert payload["refresh_token"] == "refresh-token"
 
 
-def test_oauth1_is_not_supported():
-    """OAuth1 clients are registered by aioauth-client but the plugin cannot drive them."""
-    from aioauth_client import OAuth1Client
+async def test_login_provider_error(app, client):
+    """A denied or failed authorization answers with the provider error instead of looping."""
+    res = await client.get("/github", follow_redirect=False)
+    state = URL(res.headers["location"]).query["state"]
 
+    res = await client.get(f"/github?error=access_denied&state={state}", follow_redirect=False)
+    assert res.status_code == 400
+
+
+def test_oauth1_is_not_supported():
+    """OAuth1 clients are registered by aioauth-client but the plugin rejects them."""
     import muffin_oauth
 
     app = muffin.Application(
         OAUTH_CLIENTS={"twitter": {"consumer_key": "key", "consumer_secret": "secret"}}
     )
     oauth = muffin_oauth.Plugin(app)
-    client = oauth.client("twitter")
-    assert isinstance(client, OAuth1Client)
-
-    # No request token is exchanged, so the authorize URL carries oauth_token=None
-    url = URL(oauth.authorize(client, "http://localhost/callback"))
-    assert url.query["oauth_token"] == "None"
+    with pytest.raises(muffin_oauth.OAuthError):
+        oauth.client("twitter")
 
 
 def test_config_from_env(monkeypatch):

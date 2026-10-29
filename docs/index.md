@@ -75,11 +75,10 @@ you configure `redirect_uri` differently.
 
 ## OAuth 2 only
 
-OAuth1 providers (`twitter`, `tumblr`, `flickr`, ...) exist in `aioauth-client` and can be
-instantiated with `OAuthPlugin.client()`, but the plugin cannot complete an OAuth1 round trip:
-it never calls `get_request_token()` and it only looks for the OAuth2 `code` query argument,
-while OAuth1 providers answer with `oauth_token` and `oauth_verifier`. Use `aioauth_client`
-directly if you need OAuth1.
+OAuth1 providers (`twitter`, `tumblr`, `flickr`, ...) exist in `aioauth-client`, but
+`OAuthPlugin.client()` rejects them with `OAuthError`: the plugin only looks for the OAuth2
+`code` query argument, while OAuth1 providers answer with `oauth_token` and `oauth_verifier`.
+Use `aioauth_client` directly if you need OAuth1.
 
 [muffin]: https://github.com/klen/muffin
 [aioauth-client]: https://github.com/klen/aioauth-client

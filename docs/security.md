@@ -5,7 +5,7 @@
 `authorize()` adds a `state` value built from two parts:
 
 ```
-state = <sha256 of a random number>.<base64url HMAC-SHA512 of that hash with secret>
+state = <random token>.<base64url HMAC-SHA512 of that token with secret>
 ```
 
 The signature makes the value stateless: nothing is stored server-side, yet the callback can
@@ -38,6 +38,12 @@ states signed with the old secret stop validating immediately.
   are single-use). Add a per-session nonce if you need strict one-time states.
 - **It does not authenticate the user.** `login()` only proves that the callback belongs to
   this application. Deciding whether the returned identity may sign in is your code.
+- **It does not tie the callback to the browser.** Login CSRF: an attacker can start a login,
+  copy their own callback URL (a valid `code` with a valid `state`) and send it to a victim.
+  The victim's browser completes the exchange and is logged in as the attacker, so anything the
+  victim does next lands in the attacker's account. To block it, store your own nonce in the
+  user's session when you send them to the provider and compare it in the callback before you
+  accept the login.
 - **No PKCE.** `aioauth-client` 0.30 does not implement `code_challenge` /
   `code_verifier`, so public clients cannot rely on PKCE; keep `client_secret` on the server.
 

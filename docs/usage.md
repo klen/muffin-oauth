@@ -142,6 +142,7 @@ callback must still go through `login()` to be verified.
 | Client name is unknown to `aioauth-client`    | `OAuthError`                            |
 | `state` is missing on the callback            | `ResponseError.NOT_ACCEPTABLE` (`406`)  |
 | `state` signature does not match              | `ResponseError.NOT_ACCEPTABLE` (`406`)  |
+| Provider reports an error (`error=...`)       | `ResponseError.BAD_REQUEST` (`400`)     |
 | Provider rejects the code                     | `aioauth_client.OAuthError`             |
 
 `OAuthError` from `muffin_oauth` is raised by `client()`, and therefore by `login()` and
@@ -150,7 +151,7 @@ callback must still go through `login()` to be verified.
 ## Working example
 
 [`example.py`](https://github.com/klen/muffin-oauth/blob/develop/example.py) runs GitHub and
-Google logins, renders the user info and wires `muffin-session`:
+Google logins and renders the user info:
 
 ```bash
 uv run --group example uvicorn example:app --port 5000

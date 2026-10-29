@@ -4,20 +4,13 @@ from __future__ import annotations
 
 import base64
 import hmac
-from hashlib import sha256, sha512
-from random import SystemRandom
+from hashlib import sha512
+from secrets import token_urlsafe
 from typing import Any, ClassVar, Mapping
 
-from aioauth_client import Client, ClientRegistry
+from aioauth_client import Client, ClientRegistry, OAuth2Client
 from muffin import Request, ResponseError, ResponseRedirect
 from muffin.plugins import BasePlugin
-
-__version__ = "2.3.1"
-__project__ = "muffin-oauth"
-__author__ = "Kirill Klenov <horneds@gmail.com>"
-__license__ = "MIT"
-
-random = SystemRandom().random
 
 
 class OAuthError(Exception):
@@ -39,18 +32,22 @@ class OAuthPlugin(BasePlugin):
         if client_name not in self.cfg.clients:
             raise OAuthError("Unconfigured client: %s" % client_name)
 
-        if client_name not in ClientRegistry.clients:
+        kls = ClientRegistry.clients.get(client_name)
+        if kls is None:
             raise OAuthError("Unsupported services: %s" % client_name)
 
+        if not issubclass(kls, OAuth2Client):
+            raise OAuthError("OAuth1 is not supported: %s" % client_name)
+
         params = dict(self.cfg.clients[client_name], **params)
-        return ClientRegistry.clients[client_name](**params)
+        return kls(**params)
 
     def authorize(self, client: Client, redirect_uri: str | None = None, **params):
         """Get authorization URL.
 
         The generated ``state`` is signed with the plugin secret and is not stored anywhere.
         """
-        state = sha256(str(random()).encode("ascii")).hexdigest()
+        state = token_urlsafe(32)
         state = f"{state}.{sign(state, self.cfg.secret)}"
         return client.get_authorize_url(
             redirect_uri=redirect_uri,
@@ -85,6 +82,10 @@ class OAuthPlugin(BasePlugin):
         if not redirect_uri:
             redirect_uri = str(request.url.with_query(""))
 
+        error = request.url.query.get("error")
+        if error:
+            raise ResponseError.BAD_REQUEST(error)
+
         code = request.url.query.get("code")
         if not code:
             url = self.authorize(client, redirect_uri, **params)
@@ -96,7 +97,8 @@ class OAuthPlugin(BasePlugin):
             raise ResponseError.NOT_ACCEPTABLE("Invalid state")
 
         state, _, sig = state.partition(".")
-        if sig != sign(state, self.cfg.secret):
+        expected = sign(state, self.cfg.secret)
+        if not hmac.compare_digest(sig.encode(), expected.encode()):
             raise ResponseError.NOT_ACCEPTABLE("Invalid state")
 
         # Get access token

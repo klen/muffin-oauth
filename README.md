@@ -25,10 +25,10 @@ details and the full API reference.
 pip install muffin-oauth
 ```
 
-The example application also needs `uvicorn` and `muffin-session`:
+The example application also needs `uvicorn`:
 
 ```bash
-pip install "muffin-oauth[uvicorn]" muffin-session
+pip install "muffin-oauth[uvicorn]"
 ```
 
 ## Quickstart
@@ -107,7 +107,7 @@ arguments and return values.
 
 ## Security
 
-- `state` is `<sha256 of random>.<base64url HMAC-SHA512 of that hash with secret>`; a missing or altered signature
+- `state` is `<random token>.<base64url HMAC-SHA512 of that token with secret>`; a missing or altered signature
   answers `406 Not Acceptable` and the code is never exchanged.
 - Set your own `secret`. The default value is public and lets anyone forge a `state`.
 - Without `redirect_uri` the plugin uses the current request URL without its query string, so the
@@ -117,20 +117,21 @@ arguments and return values.
 
 | Error                                      | When                                                     |
 | ------------------------------------------ | -------------------------------------------------------- |
-| `OAuthError`                               | Client is not configured or unknown to `aioauth-client`  |
+| `OAuthError`                               | Client is not configured, unknown, or OAuth1             |
+| `ResponseError.BAD_REQUEST` (`400`)        | The provider reported an error (user denied the app)     |
 | `ResponseError.NOT_ACCEPTABLE` (`406`)     | `state` is missing or its signature does not match       |
 
 ## OAuth 2 only
 
 The plugin drives OAuth2 authorization-code flows. OAuth1 providers (`twitter`, `tumblr`,
-`flickr`, ...) are registered by `aioauth-client`, but the plugin never requests a request
-token and only looks for the OAuth2 `code` query argument, so an OAuth1 round trip cannot
-complete. Use `aioauth_client` directly for OAuth1.
+`flickr`, ...) are registered by `aioauth-client`, but `client()` rejects them with `OAuthError`
+because the plugin only looks for the OAuth2 `code` query argument. Use `aioauth_client`
+directly for OAuth1.
 
 ## Example
 
 [`example.py`](https://github.com/klen/muffin-oauth/blob/develop/example.py) is a working
-application with GitHub and Google login, user info rendering and `muffin-session`:
+application with GitHub and Google login and user info rendering:
 
 ```bash
 uv run --group example uvicorn example:app --port 5000
