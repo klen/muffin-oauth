@@ -46,7 +46,10 @@ class OAuthPlugin(BasePlugin):
         return ClientRegistry.clients[client_name](**params)
 
     def authorize(self, client: Client, redirect_uri: str | None = None, **params):
-        """Get authorization URL."""
+        """Get authorization URL.
+
+        The generated ``state`` is signed with the plugin secret and is not stored anywhere.
+        """
         state = sha256(str(random()).encode("ascii")).hexdigest()
         state = f"{state}.{sign(state, self.cfg.secret)}"
         return client.get_authorize_url(
@@ -65,9 +68,15 @@ class OAuthPlugin(BasePlugin):
     ) -> tuple[Client, str, Any]:
         """Process login with OAuth.
 
+        Without a `code` in the request query redirect to the provider (raise `ResponseRedirect`),
+        otherwise verify the signed `state` and exchange the code for an access token.
+
         :param client_name: A name one of configured clients
         :param request: Web request
-        :param redirect_uri: An URI for authorization redirect
+        :param redirect_uri: An URI for authorization redirect (default: plugin config, then the
+            current request URL without query)
+        :param headers: Optional headers for the access token request
+        :return: The client with the access token set, the token and the provider response
         """
         app = self.app
         client = self.client(client_name, logger=app.logger)
@@ -99,10 +108,11 @@ class OAuthPlugin(BasePlugin):
         return client, token, data
 
     def refresh(self, client_name: str, refresh_token: str, **params):
-        """Get refresh token.
+        """Get a new access token with a refresh token.
 
         :param client_name: A name one of configured clients
-        :param redirect_uri: An URI for authorization redirect
+        :param refresh_token: A refresh token received from the provider
+        :return: An awaitable of `(token, data)` (the token is not stored by the plugin)
         """
         client = self.client(client_name, logger=self.app.logger)
         return client.get_access_token(
