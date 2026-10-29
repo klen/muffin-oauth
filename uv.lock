@@ -733,7 +733,7 @@ wheels = [
 
 [[package]]
 name = "muffin-oauth"
-version = "2.9.0"
+version = "2.10.0"
 source = { editable = "." }
 default-groups = ["dev", "example"]
 dependencies = [
