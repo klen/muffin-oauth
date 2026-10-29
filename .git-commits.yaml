@@ -2,6 +2,7 @@
 convention:
   commitTypes:
     - build
+    - ci
     - chore
     - docs
     - feat

@@ -21,8 +21,14 @@ lib64
 # Installer logs
 pip-log.txt
 
+# Environment
+.venv
+
 # Unit test / coverage reports
 .coverage
+.pytest_cache
+.ruff_cache
+.mypy_cache
 .tox
 nosetests.xml
 
@@ -38,8 +44,9 @@ nosetests.xml
 output/*.html
 output/*/index.html
 
-# Sphinx
+# Documentation
 docs/_build
+site
 
 /.ropeproject
 /.cache

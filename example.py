@@ -1,41 +1,44 @@
 """Example application.
 
 Requirements:
-    uvicorn
+    uvicorn, muffin-session
 
 Run the example with uvicorn:
 
-    $ uvicorn --port 5000 example:app
+    $ uv run --group example uvicorn example:app --port 5000
 
 """
 
-import muffin
-import muffin_oauth
-import muffin_session
 import html
 from pprint import pformat
 
+import muffin
+import muffin_session
+
+import muffin_oauth
 
 app = muffin.Application(
-    'oauth', DEBUG=True,
+    "oauth",
+    DEBUG=True,
     OAUTH_CLIENTS={
-        'github': {
-            'client_id': 'b6281b6fe88fa4c313e6',
-            'client_secret': '21ff23d9f1cad775daee6a38d230e1ee05b04f7c',
-            'scope': 'user:email',
+        "github": {
+            "client_id": "b6281b6fe88fa4c313e6",
+            "client_secret": "21ff23d9f1cad775daee6a38d230e1ee05b04f7c",
+            "scope": "user:email",
         },
-        'google': {
-            'client_id': '150775235058-9fmas709maee5nn053knv1heov12sh4n.apps.googleusercontent.com',  # noqa
-            'client_secret': 'df3JwpfRf8RIBz-9avNW8Gx7',
-            'scope': 'profile email',
+        "google": {
+            "client_id": "150775235058-9fmas709maee5nn053knv1heov12sh4n.apps.googleusercontent.com",
+            "client_secret": "df3JwpfRf8RIBz-9avNW8Gx7",
+            "scope": "profile email",
         },
-    })
+    },
+)
 
-session = muffin_session.Plugin(app, secret_key='Example')
+session = muffin_session.Plugin(app, secret_key="Example")  # noqa: S106
 oauth = muffin_oauth.Plugin(app)
 
 
-@app.route('/')
+@app.route("/")
 async def index(request):
     """Index Page."""
     return """
@@ -55,10 +58,10 @@ async def index(request):
     """
 
 
-@app.route('/oauth/{provider}')
+@app.route("/oauth/{provider}")
 async def oauth_info(request):
     """Oauth example."""
-    provider = request.path_params.get('provider')
+    provider = request.path_params.get("provider")
     client, *_ = await oauth.login(provider, request)
     user, data = await client.user_info()
     return f"""
@@ -66,20 +69,20 @@ async def oauth_info(request):
             href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
         <div class="container">
             <header class="navbar navbar-dark" style="background-color: #7952b3">
-                <h2 class="navbar-brand">Muffin OAuth Example ({ client.name })</h2>
+                <h2 class="navbar-brand">Muffin OAuth Example ({client.name})</h2>
             </header>
             <a class="btn btn-primary mt-4" href='/'>Return back</a>
             <table class="table mt-4">
-                <tr><td> ID </td><td> { user.id } </td></tr>
-                <tr><td> Username </td><td> { user.username } </td></tr>
-                <tr><td>First, last name</td><td>{ user.first_name }, { user.last_name }</td></tr>
-                <tr><td>Gender</td><td> { user.gender } </td></tr>
-                <tr><td>Email</td><td> { user.email } </td></tr>
-                <tr><td>Link</td><td> { user.link } </td></tr>
-                <tr><td>Picture</td><td> { user.picture } </td></tr>
-                <tr><td>Country, City</td><td> { user.country }, { user.city } </td></tr>
+                <tr><td> ID </td><td> {user.id} </td></tr>
+                <tr><td> Username </td><td> {user.username} </td></tr>
+                <tr><td>First, last name</td><td>{user.first_name}, {user.last_name}</td></tr>
+                <tr><td>Gender</td><td> {user.gender} </td></tr>
+                <tr><td>Email</td><td> {user.email} </td></tr>
+                <tr><td>Link</td><td> {user.link} </td></tr>
+                <tr><td>Picture</td><td> {user.picture} </td></tr>
+                <tr><td>Country, City</td><td> {user.country}, {user.city} </td></tr>
             </table>
             <h3 class="mt-4">Raw data</h3>
-            <pre>{ html.escape(pformat(data)) }</pre>
+            <pre>{html.escape(pformat(data))}</pre>
         </div>
     """
