@@ -62,6 +62,7 @@ repos:
     hooks:
       - id: pyrefly-check
         name: pyrefly check
+        entry: uv run pyrefly check # use the pinned version, not whatever is on PATH
         pass_filenames: false # Recommended to do full repo checks. However, you can change this to `true` to only check changed files
         language: system # Use system-installed pyrefly
         stages: ["pre-commit"]

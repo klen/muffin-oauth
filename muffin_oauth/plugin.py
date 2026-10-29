@@ -48,7 +48,7 @@ class OAuthPlugin(BasePlugin):
     def authorize(self, client: Client, redirect_uri: str | None = None, **params):
         """Get authorization URL."""
         state = sha256(str(random()).encode("ascii")).hexdigest()
-        state = f"{ state }.{ sign(state, self.cfg.secret) }"
+        state = f"{state}.{sign(state, self.cfg.secret)}"
         return client.get_authorize_url(
             redirect_uri=redirect_uri,
             state=state,

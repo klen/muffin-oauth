@@ -27,25 +27,33 @@ from muffin_oauth import OAuthPlugin
 
 app = Application("auth-example")
 oauth = OAuthPlugin()
-oauth.setup(app, providers={
-    "github": {
-        "client_id": "...",
-        "client_secret": "...",
-        "authorize_url": "https://github.com/login/oauth/authorize",
-        "access_token_url": "https://github.com/login/oauth/access_token",
-        "api_base_url": "https://api.github.com"
-    }
-})
+oauth.setup(
+    app,
+    providers={
+        "github": {
+            "client_id": "...",
+            "client_secret": "...",
+            "authorize_url": "https://github.com/login/oauth/authorize",
+            "access_token_url": "https://github.com/login/oauth/access_token",
+            "api_base_url": "https://api.github.com",
+        }
+    },
+)
+
 
 @app.route("/")
 async def login(request):
-    return await oauth.authorize_redirect(request, "github", redirect_uri="http://localhost:8000/callback")
+    return await oauth.authorize_redirect(
+        request, "github", redirect_uri="http://localhost:8000/callback"
+    )
+
 
 @app.route("/callback")
 async def callback(request):
     token = await oauth.authorize_access_token(request, "github")
     request.session["token"] = token
     return "Logged in"
+
 
 @app.route("/user")
 async def user(request):
