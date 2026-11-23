@@ -29,11 +29,11 @@ authorization URL, which is how `scope` reaches the provider.
 
 `login()` does two things depending on the request:
 
-1. **No `code` in the query** — it builds the authorization URL and raises
-   `muffin.ResponseRedirect`. Muffin turns that into a `307` response, so the browser goes to
-   the provider.
-2. **`code` in the query** — it verifies `state`, exchanges the code, and returns
-   `(client, token, data)`.
+1. **No `code` in the query** — it builds the authorization URL, sets an HttpOnly
+   `oauth_state` cookie and raises `muffin.ResponseRedirect`. Muffin turns that into a `307`
+   response, so the browser goes to the provider.
+2. **`code` in the query** — it verifies `state` against the signature and the `oauth_state`
+   cookie, exchanges the code, and returns `(client, token, data)`.
 
 ```python
 from muffin import ResponseError
@@ -131,8 +131,10 @@ url = oauth.authorize(client, "http://localhost:8000/callback", scope="user:emai
 return f'<a href="{url}">Login</a>'
 ```
 
-`authorize()` only builds the URL; the `state` it adds is signed but not stored, so the
-callback must still go through `login()` to be verified.
+`authorize()` only builds the URL; the `state` it adds is signed but not stored. `login()`
+checks the callback state against the `oauth_state` cookie, so if you build the URL yourself
+you must set that cookie to the same `state` value in your own response, or the callback is
+rejected with `406`. Using `login()` for the redirect sets the cookie for you.
 
 ## Errors
 
@@ -142,6 +144,7 @@ callback must still go through `login()` to be verified.
 | Client name is unknown to `aioauth-client`    | `OAuthError`                            |
 | `state` is missing on the callback            | `ResponseError.NOT_ACCEPTABLE` (`406`)  |
 | `state` signature does not match              | `ResponseError.NOT_ACCEPTABLE` (`406`)  |
+| `state` does not match the `oauth_state` cookie | `ResponseError.NOT_ACCEPTABLE` (`406`)  |
 | Provider reports an error (`error=...`)       | `ResponseError.BAD_REQUEST` (`400`)     |
 | Provider rejects the code                     | `aioauth_client.OAuthError`             |
 

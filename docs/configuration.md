@@ -54,9 +54,10 @@ keyword arguments, environment variables.
 ## Clients
 
 The key of a client entry is the name registered by `aioauth-client`; the value is passed to
-that client's constructor. Names available in `aioauth-client` 0.30 include `github`,
-`google`, `gitlab`, `discord`, `facebook`, `vk`, `yandex`, `twitter`, `slack`, `microsoft`,
-and others. OAuth1 names in that list (`twitter`) are rejected with `OAuthError`.
+that client's constructor. Names available in `aioauth-client` 1.0.0 include `github`,
+`google`, `gitlab`, `discord`, `facebook`, `vk`, `yandex`, `slack`, `microsoft`, and others.
+OAuth1 names (`twitter`, `tumblr`, `flickr`, `meetup`, `plurk`, `vimeo`) are rejected with
+`OAuthError`.
 
 ```python
 OAUTH_CLIENTS = {
@@ -76,6 +77,21 @@ OAUTH_CLIENTS = {
 
 Configured clients are also the allow-list: `client("anything-else")` raises `OAuthError`, so
 an unconfigured name cannot be used even if `aioauth-client` knows it.
+
+Each token exchange and API request opens and closes its own HTTP connection unless you pass a
+shared `httpx.AsyncClient` as `transport`. `aioauth-client` 1.0.0 keeps a shared transport
+open across calls, so pass one per application and close it in your shutdown hook when login
+volume matters:
+
+```python
+OAUTH_CLIENTS = {
+    "github": {
+        "client_id": "...",
+        "client_secret": "...",
+        "transport": httpx.AsyncClient(),  # close it in your app's shutdown hook
+    },
+}
+```
 
 ### Custom providers
 

@@ -22,7 +22,7 @@ classifiers = [
   "Framework :: AsyncIO",
   "Framework :: Trio",
 ]
-dependencies = ["aioauth-client", "muffin>=3,<4"]
+dependencies = ["aioauth-client>=1.0.0", "muffin>=3,<4"]
 
 [project.optional-dependencies]
 uvicorn = ["uvicorn"]

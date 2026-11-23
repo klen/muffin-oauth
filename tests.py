@@ -1,4 +1,4 @@
-# ruff: noqa: S105 (test tokens are not secrets)
+# ruff: noqa: S105, S106 (test tokens are not secrets)
 from unittest import mock
 
 import muffin
@@ -12,6 +12,7 @@ def app():
 
     app = muffin.Application(
         DEBUG=True,
+        OAUTH_SECRET="test-secret",
         OAUTH_CLIENTS={
             "github": {
                 "client_id": "b6281b6fe88fa4c313e6",
@@ -138,3 +139,39 @@ async def test_client_options_are_sent_to_provider(app, client):
     location = URL(res.headers["location"])
     assert location.query["client_id"] == "b6281b6fe88fa4c313e6"
     assert location.query["scope"] == "user:email"
+
+
+def test_setup_warns_on_default_secret(caplog):
+    """Leaving the public default secret in place must warn the operator."""
+    import muffin_oauth
+
+    app = muffin.Application()
+    with caplog.at_level("WARNING"):
+        muffin_oauth.Plugin(app)
+    assert any("OAUTH_SECRET" in record.message for record in caplog.records)
+
+
+def test_authorize_without_redirect_uri(app):
+    """authorize() without a redirect_uri must not put the literal None into the URL."""
+    oauth = app.plugins["oauth"]
+    location = URL(oauth.authorize(oauth.client("github")))
+    assert location.host == "github.com"
+    assert "state" in location.query
+    assert "redirect_uri" not in location.query
+
+
+async def test_login_sets_state_cookie(app, client):
+    """The redirect step sets an oauth_state cookie matching the URL state."""
+    res = await client.get("/github", follow_redirect=False)
+    state = URL(res.headers["location"]).query["state"]
+    assert res.cookies["oauth_state"].value == state
+
+
+async def test_login_state_requires_cookie(app, client):
+    """A signed state without the matching oauth_state cookie is rejected (login CSRF)."""
+    oauth = app.plugins["oauth"]
+    location = URL(oauth.authorize(oauth.client("github"), "http://localhost/callback"))
+    state = location.query["state"]
+
+    res = await client.get(f"/github?code=000&state={state}")
+    assert res.status_code == 406

@@ -36,9 +36,11 @@ client = oauth.client("github", access_token="...")
 Build the authorization URL for an already created client.
 
 - Generates a `state` value (`<random token>.<signature>`) and signs it with `secret`.
-- Passes `redirect_uri` and every extra `params` entry to `client.get_authorize_url()`; extra
-  `params` win over the entries of the client configuration.
-- Stateless: nothing is stored. The callback must still be verified by `login()`.
+- Passes `redirect_uri` (when set) and every extra `params` entry to
+  `client.get_authorize_url()`; extra `params` win over the entries of the client
+  configuration.
+- Stateless: nothing is stored. `login()` verifies the callback against the `oauth_state`
+  cookie, so callers that build the URL with `authorize()` must set that cookie themselves.
 
 ```python
 url = oauth.authorize(oauth.client("github"), "http://localhost:8000/callback")
@@ -48,10 +50,10 @@ url = oauth.authorize(oauth.client("github"), "http://localhost:8000/callback")
 
 Run one step of the authorization-code flow.
 
-- Without a `code` query parameter: builds the URL with `authorize()` and raises
-  `muffin.ResponseRedirect` (a `307` response).
-- With a `code`: validates `state`, then calls `client.get_access_token(code,
-  redirect_uri=..., headers=...)`.
+- Without a `code` query parameter: builds the URL, sets an HttpOnly `oauth_state` cookie and
+  raises `muffin.ResponseRedirect` (a `307` response).
+- With a `code`: validates `state` against its signature and the `oauth_state` cookie, then
+  calls `client.get_access_token(code, redirect_uri=..., headers=...)`.
 - `redirect_uri` defaults to `cfg.redirect_uri`, then to `str(request.url.with_query(""))`.
 - `params` go to the authorization URL; `headers` go to the token request.
 - Returns the client (with `access_token` set), the access token and the raw provider
@@ -59,7 +61,8 @@ Run one step of the authorization-code flow.
 
 Raises `OAuthError` for an unknown client, `ResponseError.BAD_REQUEST` (`400`) when the
 provider reports an error (an `error` query argument, e.g. the user denied the app) and
-`ResponseError.NOT_ACCEPTABLE` (`406`) for a missing or badly signed `state`.
+`ResponseError.NOT_ACCEPTABLE` (`406`) for a missing, badly signed or non-matching-cookie
+`state`.
 
 ```python
 client, token, data = await oauth.login("github", request)

@@ -8,15 +8,17 @@
 state = <random token>.<base64url HMAC-SHA512 of that token with secret>
 ```
 
-The signature makes the value stateless: nothing is stored server-side, yet the callback can
-prove that the state was produced by this application. `login()` recomputes the signature and
-answers `406 Not Acceptable` when:
+The signature proves the state was produced by this application. `login()` also stores the
+full state in an `oauth_state` cookie (HttpOnly, SameSite=Lax) when it redirects to the
+provider, so the callback can prove it belongs to the same browser. `login()` answers
+`406 Not Acceptable` when:
 
 - `state` is missing from the callback query,
 - the signature does not match (including a state from another application or an expired
-  `secret`).
+  `secret`),
+- the `state` does not match the `oauth_state` cookie.
 
-The code is exchanged with the provider only after the signature check passes.
+The code is exchanged with the provider only after both checks pass.
 
 ## Set your own secret
 
@@ -30,21 +32,23 @@ export MUFFIN_OAUTH_SECRET="$(python -c 'import secrets; print(secrets.token_url
 The plugin reads the secret once at setup, so restart the application after rotating it. All
 states signed with the old secret stop validating immediately.
 
-## What the signature does not protect
+## What the checks do not protect
 
-- **It is not a replay cache.** A signed `state` stays valid as long as the secret does; the
-  plugin does not remember which states it has already seen. An attacker who can read a
-  callback URL can reuse its `state` until the provider rejects the code (authorization codes
-  are single-use). Add a per-session nonce if you need strict one-time states.
+- **The cookie is not a replay cache.** A `state` stays valid as long as the secret and the
+  cookie do; the plugin does not remember which states it has already seen. An attacker who can
+  read a callback URL and set the victim's `oauth_state` cookie can reuse its `state` until the
+  provider rejects the code (authorization codes are single-use). Add a per-session nonce if
+  you need strict one-time states.
 - **It does not authenticate the user.** `login()` only proves that the callback belongs to
-  this application. Deciding whether the returned identity may sign in is your code.
-- **It does not tie the callback to the browser.** Login CSRF: an attacker can start a login,
-  copy their own callback URL (a valid `code` with a valid `state`) and send it to a victim.
-  The victim's browser completes the exchange and is logged in as the attacker, so anything the
-  victim does next lands in the attacker's account. To block it, store your own nonce in the
-  user's session when you send them to the provider and compare it in the callback before you
-  accept the login.
-- **No PKCE.** `aioauth-client` 0.30 does not implement `code_challenge` /
+  this application and browser. Deciding whether the returned identity may sign in is your
+  code.
+- **`authorize()` does not set the cookie.** If you build the authorization URL yourself with
+  `authorize()` instead of letting `login()` redirect, set the `oauth_state` cookie to the same
+  `state` value in your own response, or the callback is rejected.
+- **Non-browser clients have no cookie jar.** `login()` requires the `oauth_state` cookie, so
+  native, CLI or server-to-server flows that cannot keep cookies should run the exchange with
+  `aioauth-client` directly.
+- **No PKCE.** `aioauth-client` 1.0.0 does not implement `code_challenge` /
   `code_verifier`, so public clients cannot rely on PKCE; keep `client_secret` on the server.
 
 ## redirect_uri

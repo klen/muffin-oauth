@@ -107,9 +107,11 @@ arguments and return values.
 
 ## Security
 
-- `state` is `<random token>.<base64url HMAC-SHA512 of that token with secret>`; a missing or altered signature
-  answers `406 Not Acceptable` and the code is never exchanged.
-- Set your own `secret`. The default value is public and lets anyone forge a `state`.
+- `state` is `<random token>.<base64url HMAC-SHA512 of that token with secret>`, and `login()`
+  binds it to the browser with an HttpOnly `oauth_state` cookie. A missing, altered, or
+  non-matching `state` answers `406 Not Acceptable` and the code is never exchanged.
+- Set your own `secret`. The default value is public and lets anyone forge a `state`; the
+  plugin logs a warning when it is still in place.
 - Without `redirect_uri` the plugin uses the current request URL without its query string, so the
   provider must be registered with that exact URL.
 
@@ -119,7 +121,7 @@ arguments and return values.
 | ------------------------------------------ | -------------------------------------------------------- |
 | `OAuthError`                               | Client is not configured, unknown, or OAuth1             |
 | `ResponseError.BAD_REQUEST` (`400`)        | The provider reported an error (user denied the app)     |
-| `ResponseError.NOT_ACCEPTABLE` (`406`)     | `state` is missing or its signature does not match       |
+| `ResponseError.NOT_ACCEPTABLE` (`406`)     | `state` is missing, badly signed, or does not match the `oauth_state` cookie |
 
 ## OAuth 2 only
 

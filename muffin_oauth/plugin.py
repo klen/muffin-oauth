@@ -6,11 +6,13 @@ import base64
 import hmac
 from hashlib import sha512
 from secrets import token_urlsafe
-from typing import Any, ClassVar, Mapping
+from typing import Any, Awaitable, ClassVar, Mapping
 
-from aioauth_client import Client, ClientRegistry, OAuth2Client
-from muffin import Request, ResponseError, ResponseRedirect
+from aioauth_client import ClientRegistry, OAuth2Client
+from muffin import Application, Request, ResponseError, ResponseRedirect
 from muffin.plugins import BasePlugin
+
+STATE_COOKIE = "oauth_state"
 
 
 class OAuthError(Exception):
@@ -21,13 +23,22 @@ class OAuthPlugin(BasePlugin):
     """Support OAuth."""
 
     name = "oauth"
-    defaults: ClassVar = {
+    defaults: ClassVar[dict[str, Any]] = {
         "clients": {},
         "redirect_uri": None,
         "secret": "important:replace_me_asap!",
     }
 
-    def client(self, client_name: str, **params) -> Client:
+    def setup(self, app: Application, *, name: str | None = None, **options) -> bool:
+        """Bind the plugin and warn when the public default secret is still in use."""
+        ready = super().setup(app, name=name, **options)
+        if ready and self.cfg.secret == self.defaults["secret"]:
+            app.logger.warning(
+                "muffin-oauth uses the public default OAUTH_SECRET; set your own secret",
+            )
+        return ready
+
+    def client(self, client_name: str, **params: Any) -> OAuth2Client:
         """Initialize OAuth client from registry."""
         if client_name not in self.cfg.clients:
             raise OAuthError("Unconfigured client: %s" % client_name)
@@ -42,18 +53,22 @@ class OAuthPlugin(BasePlugin):
         params = dict(self.cfg.clients[client_name], **params)
         return kls(**params)
 
-    def authorize(self, client: Client, redirect_uri: str | None = None, **params):
+    def authorize(
+        self, client: OAuth2Client, redirect_uri: str | None = None, **params: Any
+    ) -> str:
         """Get authorization URL.
 
-        The generated ``state`` is signed with the plugin secret and is not stored anywhere.
+        The generated ``state`` is signed with the plugin secret and is not stored anywhere;
+        a callback through `login()` must carry the matching ``oauth_state`` cookie.
         """
+        if redirect_uri is not None:
+            params["redirect_uri"] = redirect_uri
+        return client.get_authorize_url(state=self._state(), **params)
+
+    def _state(self) -> str:
+        """Build a random token signed with the plugin secret."""
         state = token_urlsafe(32)
-        state = f"{state}.{sign(state, self.cfg.secret)}"
-        return client.get_authorize_url(
-            redirect_uri=redirect_uri,
-            state=state,
-            **params,
-        )
+        return f"{state}.{sign(state, self.cfg.secret)}"
 
     async def login(
         self,
@@ -61,12 +76,13 @@ class OAuthPlugin(BasePlugin):
         request: Request,
         redirect_uri: str | None = None,
         headers: Mapping[str, str] | None = None,
-        **params,
-    ) -> tuple[Client, str, Any]:
+        **params: Any,
+    ) -> tuple[OAuth2Client, str, Any]:
         """Process login with OAuth.
 
         Without a `code` in the request query redirect to the provider (raise `ResponseRedirect`),
-        otherwise verify the signed `state` and exchange the code for an access token.
+        setting an ``oauth_state`` cookie. Otherwise verify the signed `state` against that cookie
+        and exchange the code for an access token.
 
         :param client_name: A name one of configured clients
         :param request: Web request
@@ -88,28 +104,44 @@ class OAuthPlugin(BasePlugin):
 
         code = request.url.query.get("code")
         if not code:
-            url = self.authorize(client, redirect_uri, **params)
-            raise ResponseRedirect(url)
+            state = self._state()
+            url = client.get_authorize_url(
+                redirect_uri=redirect_uri,
+                state=state,
+                **params,
+            )
+            response = ResponseRedirect(url)
+            response.cookies[STATE_COOKIE] = state
+            response.cookies[STATE_COOKIE]["path"] = "/"
+            response.cookies[STATE_COOKIE]["httponly"] = True
+            response.cookies[STATE_COOKIE]["samesite"] = "lax"
+            raise response
 
         # Check state
         state = request.url.query.get("state")
         if not state:
             raise ResponseError.NOT_ACCEPTABLE("Invalid state")
 
-        state, _, sig = state.partition(".")
-        expected = sign(state, self.cfg.secret)
+        state_token, _, sig = state.partition(".")
+        expected = sign(state_token, self.cfg.secret)
         if not hmac.compare_digest(sig.encode(), expected.encode()):
+            raise ResponseError.NOT_ACCEPTABLE("Invalid state")
+
+        cookie = request.cookies.get(STATE_COOKIE, "")
+        if not hmac.compare_digest(state.encode(), cookie.encode()):
             raise ResponseError.NOT_ACCEPTABLE("Invalid state")
 
         # Get access token
         token, data = await client.get_access_token(
             code,
             redirect_uri=redirect_uri,
-            headers=headers,
+            headers=dict(headers) if headers is not None else None,
         )
         return client, token, data
 
-    def refresh(self, client_name: str, refresh_token: str, **params):
+    def refresh(
+        self, client_name: str, refresh_token: str, **params: Any
+    ) -> Awaitable[tuple[str, Any]]:
         """Get a new access token with a refresh token.
 
         :param client_name: A name one of configured clients

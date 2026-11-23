@@ -1,6 +1,32 @@
+2026-10-29  horneds
+
+	* 2.10.0: Harden the login flow, drop the muffin-session dependency
+	* 2.9.0: Run tests on Python 3.11-3.15, rewrite the docs
+
+2025-07-16  horneds
+
+	* 2.8.1: Rewrite the README from RST to Markdown
+
+2024-11-14  horneds
+
+	* 2.7.1: Fix a release regression
+	* 2.6.0: Support Python 3.13 and the latest aioauth-client
+
+2024-07-31  horneds
+
+	* 2.5.0: Support Python 3.12
+
+2023-03-04  horneds
+
+	* 2.4.0: Follow the latest muffin
+
+2023-02-21  horneds
+
+	* 2.3.0: Follow the latest muffin
+
 2021-10-21  horneds
 
-	* Support Python 3.10
+	* 2.2.0: Support Python 3.10
 
 2021-01-17  klen
 

@@ -4,14 +4,14 @@ requires-python = ">=3.11, <4"
 
 [[package]]
 name = "aioauth-client"
-version = "0.30.1"
+version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/31/a5/423a175b41e9aa811a58defa566e9f9f7e3a76e060881ab19db426edb646/aioauth_client-0.30.1.tar.gz", hash = "sha256:718b1f7f2030254902d7cad7f4980ae5b0b56755d2c3be7f6befef406948d425", size = 12721, upload-time = "2025-04-10T09:58:49.259Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f2/16/7266855f99ab9bccd1144d5f02eefcaeda0ee73e522c179eabafdf00b608/aioauth_client-1.0.0.tar.gz", hash = "sha256:bcaaa3d526a3abf60cebae756b5f832a47d65666c2ba68d08b113b8191aae58e", size = 115832, upload-time = "2026-11-23T09:55:45.471Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f4/d2/2314eebd58b904178dc6ae59a492e729288f40375201a4c96fb40b19d746/aioauth_client-0.30.1-py3-none-any.whl", hash = "sha256:806df0ddd31923952eaf8203bcdf1703331098a59a62e02640321e22c0c00015", size = 12167, upload-time = "2025-04-10T09:58:47.84Z" },
+    { url = "https://files.pythonhosted.org/packages/94/fe/02b8d029e8b15ea2d98dbea0c72635e4331946e8d9d57f91021fc4c38f6e/aioauth_client-1.0.0-py3-none-any.whl", hash = "sha256:5ec3956919c1e0bee98eb3e281fdba5a5850ed9dc154d0b0caf6815f2e7de232", size = 32220, upload-time = "2026-11-23T09:55:44.443Z" },
 ]
 
 [[package]]
@@ -764,7 +764,7 @@ example = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aioauth-client" },
+    { name = "aioauth-client", specifier = ">=1.0.0" },
     { name = "muffin", specifier = ">=3,<4" },
     { name = "uvicorn", marker = "extra == 'uvicorn'" },
 ]
