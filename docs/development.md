@@ -68,10 +68,10 @@ make release            # minor by default
 make release RELEASE=patch
 ```
 
-The target checks out `master`, merges `develop`, bumps the version with
+The target checks out `main`, merges `develop`, bumps the version with
 `uvx bump-my-version` (configuration lives in `pyproject.toml`), regenerates `uv.lock`, commits,
 tags, and pushes both branches and the tag. Publishing is done by the `release` GitHub workflow
-with `uv build` + `uv publish` once `tests` passed on `master`.
+with `uv build` + `uv publish` once `tests` passed on `main`.
 
 ## Layout
 
