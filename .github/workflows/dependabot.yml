@@ -37,6 +37,9 @@ jobs:
           fi
 
   merge:
+    concurrency:
+      group: dependabot-merge
+      cancel-in-progress: false
     if: >-
       github.event_name == 'workflow_run'
       && github.event.workflow_run.event == 'pull_request'
@@ -65,5 +68,18 @@ jobs:
             echo "Jobs did not pass ($jobs); not merging."
             exit 0
           fi
-          gh pr merge "$pr" --repo "$REPO" --squash --match-head-commit "$SHA"
-          echo "Merged #$pr."
+          # Concurrent merges move the base branch; retry this transient failure.
+          for attempt in 1 2 3 4 5; do
+            if out=$(gh pr merge "$pr" --repo "$REPO" --squash --match-head-commit "$SHA" 2>&1); then
+              echo "Merged #$pr."
+              exit 0
+            fi
+            if ! echo "$out" | grep -q "Base branch was modified"; then
+              echo "$out"
+              exit 1
+            fi
+            echo "Base branch moved (attempt $attempt/5); retrying in 5s."
+            sleep 5
+          done
+          echo "Base branch kept moving; giving up."
+          exit 1
